@@ -3,44 +3,72 @@
 import { createClient } from '@/utils/supabase/server'
 import { NextResponse } from 'next/server'
 
+// Types personnalisés
+type JustificationType = 'retard' | 'absence'
+
+interface JustificationRequestBody {
+  id_pointage: string
+  type: JustificationType
+  justification: string
+}
+
+interface ProfilEmploye {
+  id_employe: string
+}
+
+interface Pointage {
+  id_pointage: string
+  id_employe: string
+  justification_retard?: string
+  justification_absence?: string
+  statut_justification_retard?: string
+  statut_justification_absence?: string
+}
+
 export async function POST(request: Request) {
   try {
-    const { id_pointage, type, justification } = await request.json()
+    const { id_pointage, type, justification } = (await request.json()) as JustificationRequestBody
     // type: 'retard' | 'absence'
     
     const supabase = await createClient()
 
     // Vérifier l'authentification
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) {
+    // const { data: { user } } = await supabase.auth.getUser()
+    // if (!user) {
+    //   return NextResponse.json({ error: 'Non authentifié' }, { status: 401 })
+    // }
+    const { data: authData, error: authError } = await supabase.auth.getUser()
+    const user = authData?.user
+
+    if (!user || authError) {
       return NextResponse.json({ error: 'Non authentifié' }, { status: 401 })
     }
 
     // Récupérer l'ID employé
-    const { data: profil } = await supabase
+    const { data: profil, error: profileError } = await supabase
       .from('profil_utilisateur')
       .select('id_employe')
       .eq('id_profil', user.id)
-      .single()
+      .single<ProfilEmploye>()
 
-    if (!profil?.id_employe) {
+    if (profileError || !profil?.id_employe) {
       return NextResponse.json({ error: 'Employé non trouvé' }, { status: 404 })
     }
 
     // Vérifier que le pointage appartient à l'employé
-    const { data: pointage } = await supabase
+    const { data: pointage, error: pointageError } = await supabase
       .from('pointage')
       .select('*')
       .eq('id_pointage', id_pointage)
       .eq('id_employe', profil.id_employe)
-      .single()
+      .single<Pointage>()
 
-    if (!pointage) {
+    if (pointageError || !pointage) {
       return NextResponse.json({ error: 'Pointage non trouvé' }, { status: 404 })
     }
 
     // Préparer les données de mise à jour
-    const updateData: any = {}
+    const updateData: Partial<Pointage> = {}
     if (type === 'retard') {
       updateData.justification_retard = justification
       updateData.statut_justification_retard = 'en_attente'
@@ -65,11 +93,12 @@ export async function POST(request: Request) {
       data,
     })
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Erreur justification:', error)
+    const message = error instanceof Error ? error.message : 'Erreur serveur'
+
     return NextResponse.json(
-      { error: error.message || 'Erreur serveur' },
-      { status: 500 }
+      { error: message }, { status: 500 }
     )
   }
 }

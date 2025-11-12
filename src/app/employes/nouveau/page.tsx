@@ -1,4 +1,3 @@
-
 'use client'
 
 import { useState } from 'react'
@@ -6,8 +5,38 @@ import { createClient } from '@/utils/supabase/client'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 
+type UserRole = 'admin' | 'rh' | 'employe'
+
+interface FormData {
+  prenom: string
+  nom: string
+  email: string
+  telephone: string
+  poste: string
+  departement: string
+  password: string
+  confirmPassword: string
+  role: UserRole
+}
+
+interface EmployeData {
+  id_employe: string
+  prenom_employe: string
+  nom_employe: string
+  email_employe: string
+  tel_employe: string
+  post_employe: string
+  departement_employe: string
+  statut_employe: string
+}
+
+interface ApiResponse {
+  error?: string
+  success?: boolean
+}
+
 export default function NouvelEmployePage() {
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<FormData>({
     prenom: '',
     nom: '',
     email: '',
@@ -16,16 +45,16 @@ export default function NouvelEmployePage() {
     departement: '',
     password: '',
     confirmPassword: '',
-    role: 'employe' as 'admin' | 'rh' | 'employe',
+    role: 'employe',
   })
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState<boolean>(false)
   const [error, setError] = useState<string | null>(null)
-  const [success, setSuccess] = useState(false)
+  const [success, setSuccess] = useState<boolean>(false)
 
   const router = useRouter()
   const supabase = createClient()
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setLoading(true)
     setError(null)
@@ -58,9 +87,10 @@ export default function NouvelEmployePage() {
           statut_employe: 'actif',
         })
         .select()
-        .single()
+        .single<EmployeData>()
 
       if (employeError) throw employeError
+      if (!employeData) throw new Error('Aucune donnée retournée')
 
       // 2. Créer le compte Auth via l'API
       const response = await fetch('/api/auth/create-user', {
@@ -76,7 +106,7 @@ export default function NouvelEmployePage() {
         }),
       })
 
-      const result = await response.json()
+      const result: ApiResponse = await response.json()
 
       if (!response.ok) {
         throw new Error(result.error || 'Erreur lors de la création du compte')
@@ -86,8 +116,9 @@ export default function NouvelEmployePage() {
       setTimeout(() => {
         router.push('/employes')
       }, 2000)
-    } catch (err: any) {
-      setError(err.message || 'Une erreur est survenue')
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Une erreur est survenue'
+      setError(errorMessage)
     } finally {
       setLoading(false)
     }
@@ -193,7 +224,7 @@ export default function NouvelEmployePage() {
               <label className="block text-sm font-medium text-gray-700">Rôle *</label>
               <select
                 value={formData.role}
-                onChange={(e) => setFormData({ ...formData, role: e.target.value as any })}
+                onChange={(e) => setFormData({ ...formData, role: e.target.value as UserRole })}
                 className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md"
               >
                 <option value="employe">Employé</option>

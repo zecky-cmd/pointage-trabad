@@ -34,11 +34,11 @@ export async function POST(request: Request) {
     if (error) throw error
 
     return NextResponse.json({ success: true })
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Erreur toggle status:', error)
+    const message = error instanceof Error ? error.message : 'Erreur serveur'
     return NextResponse.json(
-      { error: error.message || 'Erreur serveur' },
-      { status: 500 }
+      { error: message},{ status: 500 }
     )
   }
 }

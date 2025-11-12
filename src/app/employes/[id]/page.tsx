@@ -1,9 +1,33 @@
-
 import { createClient } from '@/utils/supabase/server'
 import { redirect, notFound } from 'next/navigation'
 import Link from 'next/link'
 
-export default async function EmployeDetailPage({ params }: { params: Promise<{ id: string }> }) {
+// Types pour les données
+interface ProfilUtilisateur {
+  role: string
+  est_actif: boolean
+  derniere_connexion: string | null
+}
+
+interface Employe {
+  id_employe: string
+  prenom_employe: string
+  nom_employe: string
+  email_employe: string
+  tel_employe: string | null
+  post_employe: string | null
+  departement_employe: string | null
+  statut_employe: 'actif' | 'inactif'
+  created_at: string
+  updated_at: string
+  profil_utilisateur?: ProfilUtilisateur[]
+}
+
+interface PageProps {
+  params: Promise<{ id: string }>
+}
+
+export default async function EmployeDetailPage({ params }: PageProps) {
   const { id } = await params
   const supabase = await createClient()
 
@@ -44,7 +68,9 @@ export default async function EmployeDetailPage({ params }: { params: Promise<{ 
     notFound()
   }
 
-  const profilUser = employe.profil_utilisateur?.[0]
+  // Cast avec le type approprié
+  const employeData = employe as unknown as Employe
+  const profilUser = employeData.profil_utilisateur?.[0]
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -55,7 +81,7 @@ export default async function EmployeDetailPage({ params }: { params: Promise<{ 
               <Link href="/employes" className="text-blue-600 hover:text-blue-800">
                 ← Retour
               </Link>
-              <h1 className="text-xl font-bold">Détails de l'employé</h1>
+              <h1 className="text-xl font-bold">Détails de l&apos;employé</h1>
             </div>
             <Link
               href={`/employes/${id}/modifier`}
@@ -73,16 +99,16 @@ export default async function EmployeDetailPage({ params }: { params: Promise<{ 
           <div className="px-6 py-4 bg-gray-50 border-b flex justify-between items-center">
             <div>
               <h2 className="text-2xl font-bold text-gray-900">
-                {employe.prenom_employe} {employe.nom_employe}
+                {employeData.prenom_employe} {employeData.nom_employe}
               </h2>
-              <p className="text-sm text-gray-500 mt-1">{employe.email_employe}</p>
+              <p className="text-sm text-gray-500 mt-1">{employeData.email_employe}</p>
             </div>
             <span className={`px-3 py-1 rounded-full text-sm font-semibold ${
-              employe.statut_employe === 'actif' 
+              employeData.statut_employe === 'actif' 
                 ? 'bg-green-100 text-green-800' 
                 : 'bg-red-100 text-red-800'
             }`}>
-              {employe.statut_employe}
+              {employeData.statut_employe}
             </span>
           </div>
 
@@ -92,27 +118,27 @@ export default async function EmployeDetailPage({ params }: { params: Promise<{ 
             <dl className="grid grid-cols-2 gap-4">
               <div>
                 <dt className="text-sm font-medium text-gray-500">Prénom</dt>
-                <dd className="mt-1 text-sm text-gray-900">{employe.prenom_employe}</dd>
+                <dd className="mt-1 text-sm text-gray-900">{employeData.prenom_employe}</dd>
               </div>
               <div>
                 <dt className="text-sm font-medium text-gray-500">Nom</dt>
-                <dd className="mt-1 text-sm text-gray-900">{employe.nom_employe}</dd>
+                <dd className="mt-1 text-sm text-gray-900">{employeData.nom_employe}</dd>
               </div>
               <div>
                 <dt className="text-sm font-medium text-gray-500">Email</dt>
-                <dd className="mt-1 text-sm text-gray-900">{employe.email_employe}</dd>
+                <dd className="mt-1 text-sm text-gray-900">{employeData.email_employe}</dd>
               </div>
               <div>
                 <dt className="text-sm font-medium text-gray-500">Téléphone</dt>
-                <dd className="mt-1 text-sm text-gray-900">{employe.tel_employe || '-'}</dd>
+                <dd className="mt-1 text-sm text-gray-900">{employeData.tel_employe || '-'}</dd>
               </div>
               <div>
                 <dt className="text-sm font-medium text-gray-500">Poste</dt>
-                <dd className="mt-1 text-sm text-gray-900">{employe.post_employe || '-'}</dd>
+                <dd className="mt-1 text-sm text-gray-900">{employeData.post_employe || '-'}</dd>
               </div>
               <div>
                 <dt className="text-sm font-medium text-gray-500">Département</dt>
-                <dd className="mt-1 text-sm text-gray-900">{employe.departement_employe || '-'}</dd>
+                <dd className="mt-1 text-sm text-gray-900">{employeData.departement_employe || '-'}</dd>
               </div>
             </dl>
           </div>
@@ -159,11 +185,11 @@ export default async function EmployeDetailPage({ params }: { params: Promise<{ 
             <dl className="grid grid-cols-2 gap-4 text-xs text-gray-500">
               <div>
                 <dt className="font-medium">Créé le</dt>
-                <dd className="mt-1">{new Date(employe.created_at).toLocaleString('fr-FR')}</dd>
+                <dd className="mt-1">{new Date(employeData.created_at).toLocaleString('fr-FR')}</dd>
               </div>
               <div>
                 <dt className="font-medium">Modifié le</dt>
-                <dd className="mt-1">{new Date(employe.updated_at).toLocaleString('fr-FR')}</dd>
+                <dd className="mt-1">{new Date(employeData.updated_at).toLocaleString('fr-FR')}</dd>
               </div>
             </dl>
           </div>

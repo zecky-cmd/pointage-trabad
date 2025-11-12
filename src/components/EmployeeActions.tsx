@@ -1,13 +1,13 @@
 
-'use client'
+"use client"
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
-import Link from 'next/link'
+import { useState } from "react"
+import { useRouter } from "next/navigation"
+import Link from "next/link"
 
 interface EmployeeActionsProps {
   employeeId: number
-  statut: 'actif' | 'inactif'
+  statut: "actif" | "inactif"
   isAdmin: boolean
 }
 
@@ -17,49 +17,51 @@ export default function EmployeeActions({ employeeId, statut, isAdmin }: Employe
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
 
   const handleToggleStatut = async () => {
-    if (!confirm(`Voulez-vous vraiment ${statut === 'actif' ? 'désactiver' : 'activer'} cet employé ?`)) {
+    if (!confirm(`Voulez-vous vraiment ${statut === "actif" ? "désactiver" : "activer"} cet employé ?`)) {
       return
     }
 
     setLoading(true)
     try {
-      const response = await fetch('/api/employees/toggle-status', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          employeeId, 
-          newStatus: statut === 'actif' ? 'inactif' : 'actif' 
+      const response = await fetch("/api/employees/toggle-status", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          employeeId,
+          newStatus: statut === "actif" ? "inactif" : "actif",
         }),
       })
 
-      if (!response.ok) throw new Error('Erreur')
+      if (!response.ok) throw new Error("Erreur")
 
       router.refresh()
     } catch (error) {
-      alert('Erreur lors du changement de statut')
+      console.error("Erreur lors du changement de statut:", error)
+      alert("Erreur lors du changement de statut")
     } finally {
       setLoading(false)
     }
   }
 
   const handleDelete = async () => {
-    if (!confirm('⚠️ ATTENTION : Voulez-vous vraiment SUPPRIMER cet employé ? Cette action est irréversible !')) {
+    if (!confirm("⚠️ ATTENTION : Voulez-vous vraiment SUPPRIMER cet employé ? Cette action est irréversible !")) {
       return
     }
 
     setLoading(true)
     try {
-      const response = await fetch('/api/employees/delete', {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
+      const response = await fetch("/api/employees/delete", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ employeeId }),
       })
 
-      if (!response.ok) throw new Error('Erreur')
+      if (!response.ok) throw new Error("Erreur")
 
       router.refresh()
     } catch (error) {
-      alert('Erreur lors de la suppression')
+      console.error("Erreur lors de la suppression:", error)
+      alert("Erreur lors de la suppression")
     } finally {
       setLoading(false)
     }
@@ -67,17 +69,11 @@ export default function EmployeeActions({ employeeId, statut, isAdmin }: Employe
 
   return (
     <div className="flex items-center space-x-2">
-      <Link
-        href={`/employes/${employeeId}`}
-        className="text-blue-600 hover:text-blue-900 font-medium"
-      >
+      <Link href={`/employes/${employeeId}`} className="text-blue-600 hover:text-blue-900 font-medium">
         Voir
       </Link>
-      
-      <Link
-        href={`/employes/${employeeId}/modifier`}
-        className="text-green-600 hover:text-green-900 font-medium"
-      >
+
+      <Link href={`/employes/${employeeId}/modifier`} className="text-green-600 hover:text-green-900 font-medium">
         Modif
       </Link>
 
@@ -85,12 +81,10 @@ export default function EmployeeActions({ employeeId, statut, isAdmin }: Employe
         onClick={handleToggleStatut}
         disabled={loading}
         className={`font-medium ${
-          statut === 'actif' 
-            ? 'text-orange-600 hover:text-orange-900' 
-            : 'text-green-600 hover:text-green-900'
+          statut === "actif" ? "text-orange-600 hover:text-orange-900" : "text-green-600 hover:text-green-900"
         } disabled:opacity-50`}
       >
-        {statut === 'actif' ? 'Désactiver' : 'Activer'}
+        {statut === "actif" ? "Désactiver" : "Activer"}
       </button>
 
       {isAdmin && (

@@ -47,11 +47,11 @@ export async function POST(request: Request) {
       user: userData.user,
       message: 'Compte créé avec succès',
     })
-  } catch (error: any ) {
+  } catch (error:unknown ) {
     console.error('Erreur création user:', error)
+    const message = error instanceof Error ? error.message : 'Erreur serveur'
     return NextResponse.json(
-      { error: error.message || 'Erreur lors de la création du compte' },
-      { status: 500 }
+      { error: message }, { status: 500 }
     )
   }
 }

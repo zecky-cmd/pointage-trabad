@@ -1,5 +1,3 @@
-
-
 'use client'
 
 import { useState, useEffect } from 'react'
@@ -7,29 +5,68 @@ import { createClient } from '@/utils/supabase/client'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 
-export default function ModifierEmployePage({ params }: { params: { id: string } }) {
-  const [formData, setFormData] = useState({
+// Types pour les rôles
+type RoleType = 'admin' | 'rh' | 'employe'
+
+// Interface pour le formulaire
+interface EmployeFormData {
+  prenom: string
+  nom: string
+  email: string
+  telephone: string
+  poste: string
+  departement: string
+  role: RoleType
+}
+
+// Interface pour les données de l'employé depuis Supabase
+interface Employe {
+  id_employe: string
+  prenom_employe: string
+  nom_employe: string
+  email_employe: string
+  tel_employe: string | null
+  poste_employe: string | null
+  departement_employe: string | null
+  profil_utilisateur?: ProfilUtilisateur[]
+}
+
+// Interface pour le profil utilisateur
+interface ProfilUtilisateur {
+  role: RoleType
+}
+
+// Interface pour les props de la page
+interface ModifierEmployePageProps {
+  params: {
+    id: string
+  }
+}
+
+export default function ModifierEmployePage({ params }: ModifierEmployePageProps) {
+  const [formData, setFormData] = useState<EmployeFormData>({
     prenom: '',
     nom: '',
     email: '',
     telephone: '',
     poste: '',
     departement: '',
-    role: 'employe' as 'admin' | 'rh' | 'employe',
+    role: 'employe',
   })
-  const [loading, setLoading] = useState(true)
-  const [saving, setSaving] = useState(false)
+  const [loading, setLoading] = useState<boolean>(true)
+  const [saving, setSaving] = useState<boolean>(false)
   const [error, setError] = useState<string | null>(null)
-  const [success, setSuccess] = useState(false)
+  const [success, setSuccess] = useState<boolean>(false)
 
   const router = useRouter()
   const supabase = createClient()
 
   useEffect(() => {
     loadEmployee()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  const loadEmployee = async () => {
+  const loadEmployee = async (): Promise<void> => {
     try {
       const { data: employe, error: empError } = await supabase
         .from('employe')
@@ -41,24 +78,28 @@ export default function ModifierEmployePage({ params }: { params: { id: string }
         .single()
 
       if (empError) throw empError
+      if (!employe) throw new Error('Employé non trouvé')
+
+      const employeTyped = employe as Employe
 
       setFormData({
-        prenom: employe.prenom_employe,
-        nom: employe.nom_employe,
-        email: employe.email_employe,
-        telephone: employe.tel_employe || '',
-        poste: employe.poste_employe || '',
-        departement: employe.departement_employe || '',
-        role: employe.profil_utilisateur?.[0]?.role || 'employe',
+        prenom: employeTyped.prenom_employe,
+        nom: employeTyped.nom_employe,
+        email: employeTyped.email_employe,
+        telephone: employeTyped.tel_employe || '',
+        poste: employeTyped.poste_employe || '',
+        departement: employeTyped.departement_employe || '',
+        role: employeTyped.profil_utilisateur?.[0]?.role || 'employe',
       })
-    } catch (err: any) {
-      setError(err.message)
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Erreur lors du chargement'
+      setError(message)
     } finally {
       setLoading(false)
     }
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>): Promise<void> => {
     e.preventDefault()
     setSaving(true)
     setError(null)
@@ -73,7 +114,7 @@ export default function ModifierEmployePage({ params }: { params: { id: string }
           nom_employe: formData.nom,
           email_employe: formData.email,
           tel_employe: formData.telephone,
-          post_employe: formData.poste,
+          poste_employe: formData.poste,
           departement_employe: formData.departement,
         })
         .eq('id_employe', params.id)
@@ -94,11 +135,20 @@ export default function ModifierEmployePage({ params }: { params: { id: string }
       setTimeout(() => {
         router.push('/employes')
       }, 1500)
-    } catch (err: any) {
-      setError(err.message || 'Une erreur est survenue')
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Une erreur est survenue'
+      setError(message)
     } finally {
       setSaving(false)
     }
+  }
+
+  const handleInputChange = (field: keyof EmployeFormData, value: string): void => {
+    setFormData({ ...formData, [field]: value })
+  }
+
+  const handleRoleChange = (value: string): void => {
+    setFormData({ ...formData, role: value as RoleType })
   }
 
   if (loading) {
@@ -145,7 +195,7 @@ export default function ModifierEmployePage({ params }: { params: { id: string }
                   type="text"
                   required
                   value={formData.prenom}
-                  onChange={(e) => setFormData({ ...formData, prenom: e.target.value })}
+                  onChange={(e) => handleInputChange('prenom', e.target.value)}
                   className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md"
                 />
               </div>
@@ -156,7 +206,7 @@ export default function ModifierEmployePage({ params }: { params: { id: string }
                   type="text"
                   required
                   value={formData.nom}
-                  onChange={(e) => setFormData({ ...formData, nom: e.target.value })}
+                  onChange={(e) => handleInputChange('nom', e.target.value)}
                   className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md"
                 />
               </div>
@@ -168,7 +218,7 @@ export default function ModifierEmployePage({ params }: { params: { id: string }
                 type="email"
                 required
                 value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                onChange={(e) => handleInputChange('email', e.target.value)}
                 className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md"
               />
             </div>
@@ -178,7 +228,7 @@ export default function ModifierEmployePage({ params }: { params: { id: string }
               <input
                 type="tel"
                 value={formData.telephone}
-                onChange={(e) => setFormData({ ...formData, telephone: e.target.value })}
+                onChange={(e) => handleInputChange('telephone', e.target.value)}
                 className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md"
               />
             </div>
@@ -189,7 +239,7 @@ export default function ModifierEmployePage({ params }: { params: { id: string }
                 <input
                   type="text"
                   value={formData.poste}
-                  onChange={(e) => setFormData({ ...formData, poste: e.target.value })}
+                  onChange={(e) => handleInputChange('poste', e.target.value)}
                   className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md"
                 />
               </div>
@@ -199,7 +249,7 @@ export default function ModifierEmployePage({ params }: { params: { id: string }
                 <input
                   type="text"
                   value={formData.departement}
-                  onChange={(e) => setFormData({ ...formData, departement: e.target.value })}
+                  onChange={(e) => handleInputChange('departement', e.target.value)}
                   className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md"
                 />
               </div>
@@ -209,7 +259,7 @@ export default function ModifierEmployePage({ params }: { params: { id: string }
               <label className="block text-sm font-medium text-gray-700">Rôle *</label>
               <select
                 value={formData.role}
-                onChange={(e) => setFormData({ ...formData, role: e.target.value as any })}
+                onChange={(e) => handleRoleChange(e.target.value)}
                 className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md"
               >
                 <option value="employe">Employé</option>

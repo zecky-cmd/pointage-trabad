@@ -1,57 +1,117 @@
 import { createClient } from '@/utils/supabase/server'
 import { NextResponse } from 'next/server'
 
+// Types personnalisés
+type PointageType = 'arrive' | 'pause' | 'reprise' | 'depart'
+
+interface PointageRequestBody {
+  type: PointageType
+}
+
+interface ProfilEmploye {
+  id_employe: string
+}
+
+interface ServerTimeResponse {
+  server_time: string
+  server_date: string
+}
+
+interface Pointage {
+  id_pointage: string
+  id_employe: string
+  date_pointage: string
+  pointage_arrive?: string | null
+  pointage_pause?: string | null
+  pointage_reprise?: string | null
+  pointage_depart?: string | null
+}
+
+// Type pour le résultat de validation
+interface ValidationResult {
+  valid: boolean
+  error?: string
+}
+
+// Type pour la réponse Supabase
+interface SupabaseResponse<T> {
+  data: T | null
+  error: Error | null
+}
+
 export async function POST(request: Request) {
   try {
-    const { type } = await request.json()
-    // type: 'arrive' | 'pause' | 'reprise' | 'depart'
-    
+    const body = await request.json() as PointageRequestBody
+    const { type } = body
+
     const supabase = await createClient()
 
-    // 1. Vérifier l'authentification
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) {
+    // 1️⃣ Vérifier l'authentification
+    const { data: authData, error: authError } = await supabase.auth.getUser()
+    const user = authData?.user
+    
+    if (!user || authError) {
       return NextResponse.json({ error: 'Non authentifié' }, { status: 401 })
     }
 
-    // 2. Récupérer l'ID employé
-    const { data: profil } = await supabase
+    // 2️⃣ Récupérer l'ID employé
+    const { data: profil, error: profilError } = await supabase
       .from('profil_utilisateur')
       .select('id_employe')
       .eq('id_profil', user.id)
       .single()
 
-    if (!profil?.id_employe) {
+    if (profilError || !profil?.id_employe) {
       return NextResponse.json({ error: 'Employé non trouvé' }, { status: 404 })
     }
 
-    // 3. Récupérer l'heure serveur
-    const { data: serverTime } = await supabase.rpc('get_server_time')
-    const heureServeur = serverTime[0].server_time
-    const dateServeur = serverTime[0].server_date
+    const profilTyped = profil as ProfilEmploye
 
-    // 4. Vérifier si un pointage existe déjà aujourd'hui
-    const { data: pointageExistant } = await supabase
+    // 3️⃣ Récupérer l'heure serveur (RPC)
+    const { data: serverTime, error: rpcError } = await supabase
+      .rpc('get_server_time')
+
+    if (rpcError || !serverTime || !Array.isArray(serverTime) || serverTime.length === 0) {
+      return NextResponse.json(
+        { error: 'Impossible de récupérer l\'heure serveur' },
+        { status: 500 }
+      )
+    }
+
+    const serverTimeTyped = serverTime as ServerTimeResponse[]
+    const heureServeur = serverTimeTyped[0].server_time
+    const dateServeur = serverTimeTyped[0].server_date
+
+    // 4️⃣ Vérifier si un pointage existe déjà aujourd'hui
+    const { data: pointageExistant, error: pointageError } = await supabase
       .from('pointage')
       .select('*')
-      .eq('id_employe', profil.id_employe)
+      .eq('id_employe', profilTyped.id_employe)
       .eq('date_pointage', dateServeur)
-      .single()
+      .maybeSingle()
 
-    // 5. Valider selon le type de pointage
-    const validation = validerPointage(type, heureServeur, pointageExistant)
+    // Si erreur de requête (pas "pas trouvé")
+    if (pointageError) {
+      console.error('Erreur recherche pointage:', pointageError)
+    }
+
+    const pointageExistantTyped = pointageExistant as Pointage | null
+
+    // 5️⃣ Valider selon le type de pointage
+    const validation = validerPointage(type, heureServeur, pointageExistantTyped)
     if (!validation.valid) {
       return NextResponse.json({ error: validation.error }, { status: 400 })
     }
 
-    // 6. Créer ou mettre à jour le pointage
-    let result
-    if (!pointageExistant) {
+    // 6️⃣ Créer ou mettre à jour le pointage
+    let result: Pointage | null = null
+
+    if (!pointageExistantTyped) {
       // Créer un nouveau pointage
       const { data, error } = await supabase
         .from('pointage')
         .insert({
-          id_employe: profil.id_employe,
+          id_employe: profilTyped.id_employe,
           date_pointage: dateServeur,
           pointage_arrive: type === 'arrive' ? heureServeur : null,
         })
@@ -59,10 +119,11 @@ export async function POST(request: Request) {
         .single()
 
       if (error) throw error
-      result = data
+      result = data as Pointage
     } else {
       // Mettre à jour le pointage existant
-      const updateData: any = {}
+      const updateData: Partial<Pointage> = {}
+
       if (type === 'arrive') updateData.pointage_arrive = heureServeur
       if (type === 'pause') updateData.pointage_pause = heureServeur
       if (type === 'reprise') updateData.pointage_reprise = heureServeur
@@ -71,12 +132,12 @@ export async function POST(request: Request) {
       const { data, error } = await supabase
         .from('pointage')
         .update(updateData)
-        .eq('id_pointage', pointageExistant.id_pointage)
+        .eq('id_pointage', pointageExistantTyped.id_pointage)
         .select()
         .single()
 
       if (error) throw error
-      result = data
+      result = data as Pointage
     }
 
     return NextResponse.json({
@@ -86,77 +147,62 @@ export async function POST(request: Request) {
       date: dateServeur,
       pointage: result,
     })
-
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Erreur pointage:', error)
-    return NextResponse.json(
-      { error: error.message || 'Erreur serveur' },
-      { status: 500 }
-    )
+    const message = error instanceof Error ? error.message : 'Erreur serveur'
+    return NextResponse.json({ error: message }, { status: 500 })
   }
 }
 
-// Fonction de validation
+// ✅ Fonction de validation fortement typée
 function validerPointage(
-  type: string,
+  type: PointageType,
   heureServeur: string,
-  pointageExistant: any
-): { valid: boolean; error?: string } {
-  
+  pointageExistant?: Pointage | null
+): ValidationResult {
   switch (type) {
     case 'arrive':
-      // L'arrivée est toujours possible si pas encore pointée
       if (pointageExistant?.pointage_arrive) {
         return { valid: false, error: 'Arrivée déjà pointée aujourd\'hui' }
       }
-      // Vérification heure minimum (6h00)
       if (heureServeur < '06:00:00') {
         return { valid: false, error: 'Pointage disponible à partir de 6h00' }
       }
       return { valid: true }
 
     case 'pause':
-      // Vérifier que l'arrivée existe
       if (!pointageExistant?.pointage_arrive) {
         return { valid: false, error: 'Vous devez pointer l\'arrivée d\'abord' }
       }
-      // Vérifier que le départ n'est pas déjà pointé
       if (pointageExistant.pointage_depart) {
-        return { valid: false, error: 'Vous avez déjà pointé le départ, impossible de pointer la pause' }
+        return { valid: false, error: 'Départ déjà pointé, impossible de pointer la pause' }
       }
-      // Vérifier que la pause n'est pas déjà pointée
       if (pointageExistant.pointage_pause) {
         return { valid: false, error: 'Pause déjà pointée' }
       }
-      // Vérifier l'heure (≥ 12h30)
       if (heureServeur < '12:30:00') {
         return { valid: false, error: 'La pause est disponible à partir de 12h30' }
       }
       return { valid: true }
 
     case 'reprise':
-      // Vérifier que la pause existe
       if (!pointageExistant?.pointage_pause) {
         return { valid: false, error: 'Vous devez pointer la pause d\'abord' }
       }
-      // Vérifier que la reprise n'est pas déjà pointée
       if (pointageExistant.pointage_reprise) {
         return { valid: false, error: 'Reprise déjà pointée' }
       }
       return { valid: true }
 
     case 'depart':
-      // Vérifier que l'arrivée existe
       if (!pointageExistant?.pointage_arrive) {
         return { valid: false, error: 'Vous devez pointer l\'arrivée d\'abord' }
       }
-      // Vérifier que le départ n'est pas déjà pointé
       if (pointageExistant.pointage_depart) {
         return { valid: false, error: 'Départ déjà pointé' }
       }
-      // Vérifier l'heure (≥ 17h30)
-      if (heureServeur < '17:30:00') {
-        return { valid: false, error: 'Le départ est disponible à partir de 17h30' }
+      if (heureServeur < '16:00:00') {
+        return { valid: false, error: 'Le départ est disponible à partir de 16h00' }
       }
       return { valid: true }
 
