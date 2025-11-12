@@ -47,7 +47,7 @@ export async function POST(request: Request) {
       user: userData.user,
       message: 'Compte créé avec succès',
     })
-  } catch (error: any) {
+  } catch (error: any ) {
     console.error('Erreur création user:', error)
     return NextResponse.json(
       { error: error.message || 'Erreur lors de la création du compte' },
