@@ -1,19 +1,57 @@
-'use client'
+"use client"
 
-import { useState, useEffect } from 'react'
-import { createClient } from '@/utils/supabase/client'
-import { useRouter, useSearchParams } from 'next/navigation'
-// import Link from 'next/link'
-import PointageRowEdit from '@/components/PointageRowEdit'
-import Navigation from '@/components/navigation/Nav'
-// import { exportRapportPDF, exportEmployeExcel } from '@/utils/exports'
+import { useState, useEffect } from "react"
+import { createClient } from "@/utils/supabase/client"
+import { useRouter, useSearchParams } from "next/navigation"
+import PointageRowEdit from "@/components/PointageRowEdit"
+import Navigation from "@/components/navigation/Nav"
+
+interface Employe {
+  id_employe: string
+  prenom_employe: string
+  nom_employe: string
+  post_employe: string
+}
+
+interface Pointage {
+  id_pointage: number
+  id_employe: string
+  date_pointage: string
+  pointage_arrive: string | null
+  pointage_depart: string | null
+  pointage_pause: string | null
+  pointage_reprise: string | null
+  retard_minutes: number
+  statut: "present" | "absent" | "conge"
+  statut_justification_absence: "justifiee" | "non_justifiee" | null
+  statut_justification_retard: "justifiee" | "non_justifiee" | null
+}
+
+interface Stats {
+  totalHeures: string
+  joursPresent: number
+  joursAbsent: number
+  absencesJustifiees: number
+  totalRetard: string
+  retardsSignificatifs: number
+  retardsJustifies: number
+  heuresPayables: string
+  heuresAbsencesNonJustifiees: string
+  retardsJustifiesHeures: string
+  retardsNonJustifiesHeures: string
+}
+
+interface ProfilUtilisateur {
+  id_profil: string
+  role: "admin" | "rh" | "employe"
+}
 
 export default function DetailEmployePage({ params }: { params: { id: string } }) {
-  const [loading, setLoading] = useState(true)
-  const [employe, setEmploye]: any = useState(null)
-  const [moisSelectionne, setMoisSelectionne] = useState('')
-  const [pointages, setPointages] = useState<any[]>([])
-  const [stats, setStats] = useState<any>(null)
+  const [loading, setLoading] = useState<boolean>(true)
+  const [employe, setEmploye] = useState<Employe | null>(null)
+  const [moisSelectionne, setMoisSelectionne] = useState<string>("")
+  const [pointages, setPointages] = useState<Pointage[]>([])
+  const [stats, setStats] = useState<Stats | null>(null)
   const [editingId, setEditingId] = useState<number | null>(null)
 
   const router = useRouter()
@@ -21,12 +59,12 @@ export default function DetailEmployePage({ params }: { params: { id: string } }
   const supabase = createClient()
 
   useEffect(() => {
-    const moisUrl = searchParams.get('mois')
+    const moisUrl = searchParams.get("mois")
     if (moisUrl) {
       setMoisSelectionne(moisUrl)
     } else {
       const now = new Date()
-      setMoisSelectionne(`${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`)
+      setMoisSelectionne(`${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`)
     }
     loadData()
   }, [searchParams])
@@ -37,58 +75,58 @@ export default function DetailEmployePage({ params }: { params: { id: string } }
     }
   }, [moisSelectionne, employe])
 
-  const loadData = async () => {
+  const loadData = async (): Promise<void> => {
     try {
-      const { data: { user } } = await supabase.auth.getUser()
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
       if (!user) {
-        router.push('/login')
+        router.push("/login")
         return
       }
 
       const { data: profil } = await supabase
-        .from('profil_utilisateur')
-        .select('role')
-        .eq('id_profil', user.id)
+        .from("profil_utilisateur")
+        .select("role")
+        .eq("id_profil", user.id)
         .single()
 
-      if (!profil || !['admin', 'rh'].includes(profil.role)) {
-        router.push('/dashboard')
+      const typedProfil = profil as ProfilUtilisateur | null
+      if (!typedProfil || !["admin", "rh"].includes(typedProfil.role)) {
+        router.push("/dashboard")
         return
       }
 
-      const { data: emp } = await supabase
-        .from('employe')
-        .select('*')
-        .eq('id_employe', params.id)
-        .single()
+      const { data: emp } = await supabase.from("employe").select("*").eq("id_employe", params.id).single()
 
-      setEmploye(emp)
+      setEmploye(emp as Employe)
     } catch (error) {
-      console.error('Erreur:', error)
+      console.error("Erreur:", error)
     } finally {
       setLoading(false)
     }
   }
 
-  const loadPointagesMois = async () => {
-    const [annee, mois] = moisSelectionne.split('-')
+  const loadPointagesMois = async (): Promise<void> => {
+    const [annee, mois] = moisSelectionne.split("-")
     const premierJour = `${annee}-${mois}-01`
-    const dernierJour = new Date(parseInt(annee), parseInt(mois), 0).getDate()
+    const dernierJour = new Date(Number.parseInt(annee), Number.parseInt(mois), 0).getDate()
     const dernierJourDate = `${annee}-${mois}-${dernierJour}`
 
     const { data } = await supabase
-      .from('pointage')
-      .select('*')
-      .eq('id_employe', params.id)
-      .gte('date_pointage', premierJour)
-      .lte('date_pointage', dernierJourDate)
-      .order('date_pointage', { ascending: false })
+      .from("pointage")
+      .select("*")
+      .eq("id_employe", params.id)
+      .gte("date_pointage", premierJour)
+      .lte("date_pointage", dernierJourDate)
+      .order("date_pointage", { ascending: false })
 
-    setPointages(data || [])
-    calculerStats(data || [])
+    const typedPointages = (data || []) as Pointage[]
+    setPointages(typedPointages)
+    calculerStats(typedPointages)
   }
 
-  const calculerStats = (pointagesData: any[]) => {
+  const calculerStats = (pointagesData: Pointage[]): void => {
     let totalHeures = 0
     let totalRetard = 0
     let joursPresent = 0
@@ -97,20 +135,20 @@ export default function DetailEmployePage({ params }: { params: { id: string } }
     let retardsSignificatifs = 0
     let retardsJustifies = 0
 
-    pointagesData.forEach(p => {
-      if (p.statut === 'present') {
+    pointagesData.forEach((p) => {
+      if (p.statut === "present") {
         joursPresent++
         totalHeures += calculerHeuresTravaillees(p)
       }
-      if (p.statut === 'absent') {
+      if (p.statut === "absent") {
         joursAbsent++
-        if (p.statut_justification_absence === 'justifiee') absencesJustifiees++
+        if (p.statut_justification_absence === "justifiee") absencesJustifiees++
       }
       if (p.retard_minutes > 0) {
         totalRetard += p.retard_minutes
         if (p.retard_minutes > 15) {
           retardsSignificatifs++
-          if (p.statut_justification_retard === 'justifiee') retardsJustifies++
+          if (p.statut_justification_retard === "justifiee") retardsJustifies++
         }
       }
     })
@@ -133,7 +171,7 @@ export default function DetailEmployePage({ params }: { params: { id: string } }
     })
   }
 
-  const calculerHeuresTravaillees = (pointage: any) => {
+  const calculerHeuresTravaillees = (pointage: Pointage): number => {
     if (!pointage.pointage_arrive || !pointage.pointage_depart) return 0
     const arrive = new Date(`2000-01-01T${pointage.pointage_arrive}`)
     const depart = new Date(`2000-01-01T${pointage.pointage_depart}`)
@@ -149,24 +187,26 @@ export default function DetailEmployePage({ params }: { params: { id: string } }
     return Math.max(0, heures)
   }
 
-  const formatDuree = (heures: number) => {
+  const formatDuree = (heures: number): string => {
     const h = Math.floor(heures)
     const m = Math.round((heures - h) * 60)
-    return `${h}h${String(m).padStart(2, '0')}`
+    return `${h}h${String(m).padStart(2, "0")}`
   }
 
-  const handleSavePointage = async () => {
+  const handleSavePointage = async (): Promise<void> => {
     await loadPointagesMois()
     setEditingId(null)
   }
 
-  const exportPDF = async () => {
-    const { exportRapportPDF } = await import('@/utils/exports')
+  const exportPDF = async (): Promise<void> => {
+    if (!employe) return
+    const { exportRapportPDF } = await import("@/utils/exports")
     exportRapportPDF(employe, moisSelectionne, pointages, stats)
   }
 
-  const exportExcel = async () => {
-    const { exportEmployeExcel } = await import('@/utils/exports')
+  const exportExcel = async (): Promise<void> => {
+    if (!employe) return
+    const { exportEmployeExcel } = await import("@/utils/exports")
     exportEmployeExcel(employe, pointages, moisSelectionne, stats)
   }
 
@@ -182,12 +222,17 @@ export default function DetailEmployePage({ params }: { params: { id: string } }
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <div className="h-12 w-12 rounded-full bg-blue-500 flex items-center justify-center text-white font-bold text-lg">
-                {employe?.prenom_employe?.[0]}{employe?.nom_employe?.[0]}
+                {employe?.prenom_employe?.[0]}
+                {employe?.nom_employe?.[0]}
               </div>
               <div>
-                <h1 className="text-2xl font-bold">Détail du mois pour {employe?.prenom_employe} {employe?.nom_employe}</h1>
+                <h1 className="text-2xl font-bold">
+                  Détail du mois pour {employe?.prenom_employe} {employe?.nom_employe}
+                </h1>
                 <p className="text-gray-600">{employe?.post_employe}</p>
-                <p className="text-sm text-gray-500 mt-1">Horaires de travail : 8h30 - 17h30 (8h de travail effectif)</p>
+                <p className="text-sm text-gray-500 mt-1">
+                  Horaires de travail : 8h30 - 17h30 (8h de travail effectif)
+                </p>
               </div>
             </div>
             <div className="flex space-x-4">

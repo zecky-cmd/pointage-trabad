@@ -3,23 +3,28 @@
 import { useState, useEffect } from "react"
 import { createClient } from "@/utils/supabase/client"
 import { useRouter } from "next/navigation"
-import Link from "next/link"
 import JustificationModal from "@/components/JustificationModal"
 import Navigation from "@/components/navigation/Nav"
+import type { Employee, Pointage, StatsData } from "@/types/pointage"
+
+interface StatCardProps {
+  label: string
+  value: string | number
+  subtext: string
+  colorClass: string
+  valueClass: string
+}
 
 export default function RapportMensuelPage() {
-  // ------- start  --------------
   const [loading, setLoading] = useState(true)
-  const [employe, setEmploye] = useState<any>(null)
+  const [employe, setEmploye] = useState<Employee | null>(null)
   const [moisSelectionne, setMoisSelectionne] = useState("")
-  const [pointages, setPointages] = useState<any[]>([])
-  const [stats, setStats] = useState<any>(null)
-  // ---------- end -------------------------------------------------------
+  const [pointages, setPointages] = useState<Pointage[]>([])
+  const [stats, setStats] = useState<StatsData | null>(null)
   const [showJustificationModal, setShowJustificationModal] = useState(false)
-  const [selectedPointage, setSelectedPointage] = useState<any>(null)
+  const [selectedPointage, setSelectedPointage] = useState<Pointage | null>(null)
   const [justificationType, setJustificationType] = useState<"retard" | "absence">("retard")
 
-  // ------------ start-------------------------------------------
   const router = useRouter()
   const supabase = createClient()
 
@@ -35,7 +40,7 @@ export default function RapportMensuelPage() {
       loadPointagesMois()
     }
   }, [moisSelectionne, employe])
-// --------------- end ---------------------------
+
   const loadData = async () => {
     try {
       const {
@@ -60,7 +65,10 @@ export default function RapportMensuelPage() {
         .eq("id_profil", user.id)
         .single()
 
-      setEmploye(profil?.employe)
+      if (profil && "employe" in profil && profil.employe) {
+        const employee = profil.employe as unknown as Employee
+        setEmploye(employee)
+      }
     } catch (error) {
       console.error("Erreur:", error)
     } finally {
@@ -84,11 +92,12 @@ export default function RapportMensuelPage() {
       .lte("date_pointage", dernierJourDate)
       .order("date_pointage", { ascending: false })
 
-    setPointages(data || [])
-    calculerStats(data || [])
+    const typedData = (data as Pointage[]) || []
+    setPointages(typedData)
+    calculerStats(typedData)
   }
 
-  const calculerStats = (pointagesData: any[]) => {
+  const calculerStats = (pointagesData: Pointage[]) => {
     let totalHeures = 0
     let totalRetard = 0
     let joursPresent = 0
@@ -118,9 +127,9 @@ export default function RapportMensuelPage() {
 
     const heuresTheoriques = (joursPresent + absencesJustifiees) * 8
     const heuresAbsencesNonJustifiees = (joursAbsent - absencesJustifiees) * 8
-    const heuresPayables = heuresTheoriques;
+    const heuresPayables = heuresTheoriques
 
-    setStats({
+    const newStats: StatsData = {
       totalHeures: formatDuree(totalHeures),
       joursPresent,
       joursAbsent,
@@ -129,10 +138,11 @@ export default function RapportMensuelPage() {
       retardsSignificatifs,
       heuresPayables: formatDuree(heuresPayables),
       heuresAbsencesNonJustifiees: formatDuree(heuresAbsencesNonJustifiees),
-    })
+    }
+    setStats(newStats)
   }
 
-  const calculerHeuresTravaillees = (pointage: any) => {
+  const calculerHeuresTravaillees = (pointage: Pointage): number => {
     if (!pointage.pointage_arrive || !pointage.pointage_depart) return 0
 
     const arrive = new Date(`2000-01-01T${pointage.pointage_arrive}`)
@@ -151,18 +161,18 @@ export default function RapportMensuelPage() {
     return Math.max(0, heures)
   }
 
-  const formatDuree = (heures: number) => {
+  const formatDuree = (heures: number): string => {
     const h = Math.floor(heures)
     const m = Math.round((heures - h) * 60)
     return `${h}h${String(m).padStart(2, "0")}`
   }
 
-  const formatDate = (dateStr: string) => {
+  const formatDate = (dateStr: string): string => {
     const date = new Date(dateStr)
     return date.toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit" })
   }
 
-  const openJustificationModal = (pointage: any, type: "retard" | "absence") => {
+  const openJustificationModal = (pointage: Pointage, type: "retard" | "absence") => {
     setSelectedPointage(pointage)
     setJustificationType(type)
     setShowJustificationModal(true)
@@ -170,6 +180,8 @@ export default function RapportMensuelPage() {
 
   const handleSubmitJustification = async (type: "retard" | "absence", justification: string) => {
     try {
+      if (!selectedPointage) throw new Error("Pointage non sélectionné")
+
       const response = await fetch("/api/pointage/justification", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -180,7 +192,7 @@ export default function RapportMensuelPage() {
         }),
       })
 
-      const result = await response.json()
+      const result: { error?: string } = await response.json()
 
       if (!response.ok) {
         throw new Error(result.error || "Erreur")
@@ -188,8 +200,9 @@ export default function RapportMensuelPage() {
 
       alert("✅ Justification envoyée avec succès. Elle sera examinée par un administrateur.")
       await loadPointagesMois()
-    } catch (error: any) {
-      alert(`Erreur: ${error.message}`)
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Erreur inconnue"
+      alert(`Erreur: ${message}`)
     }
   }
 
@@ -318,7 +331,7 @@ export default function RapportMensuelPage() {
                           {p.retard_minutes}m
                         </span>
                       ) : (
-                        <span className="text-green-600 font-medium">À l'heure</span>
+                        <span className="text-green-600 font-medium">À l&apos;heure</span>
                       )}
                     </td>
                     <td className="px-3 sm:px-4 py-3 whitespace-nowrap text-xs">
@@ -414,7 +427,7 @@ export default function RapportMensuelPage() {
   )
 }
 
-function StatCard({ label, value, subtext, colorClass, valueClass }: any) {
+function StatCard({ label, value, subtext, colorClass, valueClass }: StatCardProps) {
   return (
     <div className={`${colorClass} rounded-lg p-4 sm:p-5 transition-transform hover:scale-105`}>
       <p className="text-xs sm:text-sm font-medium text-gray-700">{label}</p>

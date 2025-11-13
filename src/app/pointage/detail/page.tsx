@@ -1,23 +1,44 @@
+"use client"
 
-'use client'
+import { useState, useEffect } from "react"
+import { createClient } from "@/utils/supabase/client"
+import { useRouter } from "next/navigation"
+import Link from "next/link"
+import Navigation from "@/components/navigation/Nav"
 
-import { useState, useEffect } from 'react'
-import { createClient } from '@/utils/supabase/client'
-import { useRouter } from 'next/navigation'
-import Link from 'next/link'
-import Navigation from '@/components/navigation/Nav'
+interface ProfilUtilisateur {
+  id_profil: string
+  role: "admin" | "rh" | "employe"
+}
+
+interface EmployeStat {
+  id_employe: string
+  prenom_employe: string
+  nom_employe: string
+  post_employe: string
+  heures_travaillees: number
+  jours_travailles: number
+  total_retard_minutes: number
+  nombre_retards: number
+  nombre_absences: number
+  absences_justifiees: number
+}
+
+interface SupabaseError {
+  message: string
+}
 
 export default function RapportAdminPage() {
-  const [loading, setLoading] = useState(true)
-  const [moisSelectionne, setMoisSelectionne] = useState('')
-  const [employeStats, setEmployeStats] = useState<any[]>([])
+  const [loading, setLoading] = useState<boolean>(true)
+  const [moisSelectionne, setMoisSelectionne] = useState<string>("")
+  const [employeStats, setEmployeStats] = useState<EmployeStat[]>([])
 
   const router = useRouter()
   const supabase = createClient()
 
   useEffect(() => {
     const now = new Date()
-    const moisActuel = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
+    const moisActuel = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`
     setMoisSelectionne(moisActuel)
     loadData()
   }, [])
@@ -28,49 +49,53 @@ export default function RapportAdminPage() {
     }
   }, [moisSelectionne])
 
-  const loadData = async () => {
+  const loadData = async (): Promise<void> => {
     try {
-      const { data: { user } } = await supabase.auth.getUser()
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
       if (!user) {
-        router.push('/login')
+        router.push("/login")
         return
       }
 
       const { data: profil } = await supabase
-        .from('profil_utilisateur')
-        .select('role')
-        .eq('id_profil', user.id)
+        .from("profil_utilisateur")
+        .select("role")
+        .eq("id_profil", user.id)
         .single()
 
-      if (!profil || !['admin', 'rh'].includes(profil.role)) {
-        router.push('/dashboard')
+      const typedProfil = profil as ProfilUtilisateur | null
+
+      if (!typedProfil || !["admin", "rh"].includes(typedProfil.role)) {
+        router.push("/dashboard")
         return
       }
 
       setLoading(false)
     } catch (error) {
-      console.error('Erreur:', error)
-      router.push('/dashboard')
+      console.error("Erreur:", error)
+      router.push("/dashboard")
     }
   }
 
-  const loadStats = async () => {
-    const [annee, mois] = moisSelectionne.split('-')
+  const loadStats = async (): Promise<void> => {
+    const [annee, mois] = moisSelectionne.split("-")
 
     const { data: stats } = await supabase
-      .from('v_statistiques_pointage')
-      .select('*')
-      .eq('annee', parseInt(annee))
-      .eq('mois', parseInt(mois))
-      .order('nom_employe')
+      .from("v_statistiques_pointage")
+      .select("*")
+      .eq("annee", Number.parseInt(annee))
+      .eq("mois", Number.parseInt(mois))
+      .order("nom_employe")
 
-    setEmployeStats(stats || [])
+    setEmployeStats((stats as EmployeStat[]) || [])
   }
 
-  const formatDuree = (heures: number) => {
+  const formatDuree = (heures: number): string => {
     const h = Math.floor(heures)
     const m = Math.round((heures - h) * 60)
-    return `${h}h${String(m).padStart(2, '0')}`
+    return `${h}h${String(m).padStart(2, "0")}`
   }
 
   if (loading) {
@@ -79,16 +104,14 @@ export default function RapportAdminPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Navigation href='/dashboard' />
+      <Navigation href="/dashboard" />
 
       <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className="bg-white rounded-lg shadow p-6 mb-6">
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-2xl font-bold">Rapport Mensuel de Pointage</h1>
-              <p className="text-gray-600 mt-1">
-                Horaires de travail : 8h30 - 17h30 (8h de travail effectif)
-              </p>
+              <p className="text-gray-600 mt-1">Horaires de travail : 8h30 - 17h30 (8h de travail effectif)</p>
             </div>
             <div className="flex space-x-4">
               <div>
@@ -118,7 +141,7 @@ export default function RapportAdminPage() {
                   Total Retards
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Nombre d'Absences
+                  Nombre d&apos;Absences
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Actions
@@ -126,13 +149,14 @@ export default function RapportAdminPage() {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {employeStats.map((stat) => (
+              {employeStats.map((stat: EmployeStat) => (
                 <tr key={stat.id_employe}>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
                       <div className="h-10 w-10 flex-shrink-0">
                         <div className="h-10 w-10 rounded-full bg-blue-500 flex items-center justify-center text-white font-bold">
-                          {stat.prenom_employe[0]}{stat.nom_employe[0]}
+                          {stat.prenom_employe[0]}
+                          {stat.nom_employe[0]}
                         </div>
                       </div>
                       <div className="ml-4">
@@ -144,30 +168,22 @@ export default function RapportAdminPage() {
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-semibold text-gray-900">
-                      {formatDuree(stat.heures_travaillees)}
-                    </div>
-                    <div className="text-sm text-gray-500">
-                      {stat.jours_travailles} jours travaillés
-                    </div>
+                    <div className="text-sm font-semibold text-gray-900">{formatDuree(stat.heures_travaillees)}</div>
+                    <div className="text-sm text-gray-500">{stat.jours_travailles} jours travaillés</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className={`text-sm font-semibold ${
-                      stat.total_retard_minutes > 0 ? 'text-red-600' : 'text-gray-900'
-                    }`}>
+                    <div
+                      className={`text-sm font-semibold ${
+                        stat.total_retard_minutes > 0 ? "text-red-600" : "text-gray-900"
+                      }`}
+                    >
                       {formatDuree(stat.total_retard_minutes / 60)}
                     </div>
-                    <div className="text-sm text-gray-500">
-                      {stat.nombre_retards} jours de retard
-                    </div>
+                    <div className="text-sm text-gray-500">{stat.nombre_retards} jours de retard</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-semibold text-gray-900">
-                      {stat.nombre_absences}
-                    </div>
-                    <div className="text-sm text-gray-500">
-                      {stat.absences_justifiees} justifiées
-                    </div>
+                    <div className="text-sm font-semibold text-gray-900">{stat.nombre_absences}</div>
+                    <div className="text-sm text-gray-500">{stat.absences_justifiees} justifiées</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm">
                     <Link
@@ -183,9 +199,7 @@ export default function RapportAdminPage() {
           </table>
 
           {employeStats.length === 0 && (
-            <div className="text-center py-12 text-gray-500">
-              Aucune donnée pour ce mois
-            </div>
+            <div className="text-center py-12 text-gray-500">Aucune donnée pour ce mois</div>
           )}
         </div>
       </main>
