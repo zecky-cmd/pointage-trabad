@@ -173,7 +173,7 @@ export default function ModifierEmployePage({ params }: ModifierEmployePageProps
 
       <main className="max-w-3xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className="bg-white rounded-lg shadow p-6">
-          <h1 className="text-2xl font-bold mb-6">Modifier l'employé</h1>
+          <h1 className="text-2xl font-bold mb-6">Modifier l&apos;employé</h1>
 
           {error && (
             <div className="mb-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">

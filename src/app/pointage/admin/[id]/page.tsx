@@ -10,7 +10,7 @@ import Navigation from '@/components/navigation/Nav'
 
 export default function DetailEmployePage({ params }: { params: { id: string } }) {
   const [loading, setLoading] = useState(true)
-  const [employe, setEmploye] = useState<any>(null)
+  const [employe, setEmploye]: any = useState(null)
   const [moisSelectionne, setMoisSelectionne] = useState('')
   const [pointages, setPointages] = useState<any[]>([])
   const [stats, setStats] = useState<any>(null)
@@ -29,7 +29,7 @@ export default function DetailEmployePage({ params }: { params: { id: string } }
       setMoisSelectionne(`${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`)
     }
     loadData()
-  }, [])
+  }, [searchParams])
 
   useEffect(() => {
     if (moisSelectionne && employe) {

@@ -318,7 +318,7 @@ export default function RapportMensuelPage() {
                         {p.retard_minutes}min
                       </span>
                     ) : (
-                      <span className="text-green-600">À l'heure</span>
+                      <span className="text-green-600">À l&apos;heure</span>
                     )}
                   </td>
                   <td className="px-4 py-3 whitespace-nowrap text-sm">

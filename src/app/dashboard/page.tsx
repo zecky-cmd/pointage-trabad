@@ -49,7 +49,7 @@ export default async function DashboardPage() {
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <div className="bg-card border border-border rounded-xl shadow-lg p-8 max-w-md w-full">
           <h2 className="text-2xl font-bold text-destructive mb-4">Profil incomplet</h2>
-          <p className="text-foreground mb-4">Votre compte n'est pas lié à un employé. Contactez l'administrateur.</p>
+          <p className="text-foreground mb-4">Votre compte n&apos;est pas lié à un employé. Contactez l&apos;administrateur.</p>
           <p className="text-sm text-muted-foreground bg-muted p-4 rounded-lg mb-6">
             Email: {user.email}
             <br />
