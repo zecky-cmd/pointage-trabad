@@ -200,33 +200,7 @@ export default function DetailEmployePage({ params }: { params: { id: string } }
     setEditingId(null)
   }
 
-  // const exportPDF = async (): Promise<void> => {
-  //   if (!employe) return
-  //   try {
-  //     const { exportRapportPDF } = await import("@/utils/exports")
-  //     exportRapportPDF(employe, moisSelectionne, pointages, stats)
-  //   } catch (err) {
-  //     if (err instanceof Error) {
-  //       console.error("Erreur export PDF:", err.message)
-  //     } else {
-  //       console.error("Erreur export PDF:", err)
-  //     }
-  //   }
-  // }
 
-  // const exportExcel = async (): Promise<void> => {
-  //   if (!employe) return
-  //   try {
-  //     const { exportEmployeExcel } = await import("@/utils/exports")
-  //     exportEmployeExcel(employe, pointages, moisSelectionne, stats)
-  //   } catch (err) {
-  //     if (err instanceof Error) {
-  //       console.error("Erreur export Excel:", err.message)
-  //     } else {
-  //       console.error("Erreur export Excel:", err)
-  //     }
-  //   }
-  // }
 
   if (loading) {
     return <div className="min-h-screen bg-gray-50 flex items-center justify-center">Chargement...</div>
@@ -260,12 +234,12 @@ export default function DetailEmployePage({ params }: { params: { id: string } }
                 onChange={(e) => setMoisSelectionne(e.target.value)}
                 className="px-4 py-2 border border-gray-300 rounded-md"
               />
-              {/* <button onClick={exportPDF} className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700">
+              <button  className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700">
                 📄 Exporter PDF
-              </button> */}
-              {/* <button onClick={exportExcel} className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">
+              </button>
+              <button  className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">
                 📊 Exporter Excel
-              </button> */}
+              </button>
             </div>
           </div>
         </div>
