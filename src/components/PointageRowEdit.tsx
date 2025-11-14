@@ -1,15 +1,42 @@
 'use client'
 
 import { useState } from 'react'
-import { createClient } from '@/utils/supabase/client'
+// import { createClient } from '@/utils/supabase/client'
+
+interface PointageData {
+  id_pointage: number
+  id_employe: string
+  date_pointage: string
+  pointage_arrive: string | null
+  pointage_pause: string | null
+  pointage_reprise: string | null
+  pointage_depart: string | null
+  justification_absence: string | null
+  justification_retard: string | null
+  statut_justification_absence: 'en_attente' | 'justifiee' | 'rejetee' | null
+  statut_justification_retard: 'en_attente' | 'justifiee' | 'rejetee' | null
+  retard_minutes: number
+  statut: 'present' | 'absent' | 'weekend' | 'conge'
+}
+
+interface FormDataType {
+  pointage_arrive: string
+  pointage_pause: string
+  pointage_reprise: string
+  pointage_depart: string
+  justification_absence: string | null
+  justification_retard: string | null
+  statut_justification_absence: 'en_attente' | 'justifiee' | 'rejetee' | null
+  statut_justification_retard: 'en_attente' | 'justifiee' | 'rejetee' | null
+}
 
 interface Props {
-  pointage: any
+  pointage: PointageData
   isEditing: boolean
   onEdit: () => void
   onSave: () => void
   onCancel: () => void
-  calculerHeures: (p: any) => number
+  calculerHeures: (p: PointageData) => number
   formatDuree: (h: number) => string
 }
 
@@ -22,19 +49,17 @@ export default function PointageRowEdit({
   calculerHeures,
   formatDuree 
 }: Props) {
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<FormDataType>({
     pointage_arrive: pointage.pointage_arrive || '',
     pointage_pause: pointage.pointage_pause || '',
     pointage_reprise: pointage.pointage_reprise || '',
     pointage_depart: pointage.pointage_depart || '',
-    justification_absence: pointage.justification_absence || '',
-    justification_retard: pointage.justification_retard || '',
+    justification_absence: pointage.justification_absence || null,
+    justification_retard: pointage.justification_retard || null,
     statut_justification_absence: pointage.statut_justification_absence || null,
     statut_justification_retard: pointage.statut_justification_retard || null,
   })
   const [saving, setSaving] = useState(false)
-
-  const supabase = createClient()
 
   const handleSave = async () => {
     setSaving(true)
@@ -56,15 +81,16 @@ export default function PointageRowEdit({
 
       alert('✅ Pointage mis à jour avec succès')
       onSave()
-    } catch (err: any) {
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Erreur inconnue'
       console.error('Erreur:', err)
-      alert(`Erreur: ${err.message}`)
+      alert(`Erreur: ${errorMessage}`)
     } finally {
       setSaving(false)
     }
   }
 
-  const formatDate = (dateStr: string) => {
+  const formatDate = (dateStr: string): string => {
     const date = new Date(dateStr)
     return date.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })
   }
@@ -113,7 +139,10 @@ export default function PointageRowEdit({
             {pointage.justification_absence && (
               <select
                 value={formData.statut_justification_absence || ''}
-                onChange={(e) => setFormData({ ...formData, statut_justification_absence: e.target.value || null })}
+                onChange={(e) => setFormData({ 
+                  ...formData, 
+                  statut_justification_absence: (e.target.value as 'en_attente' | 'justifiee' | 'rejetee') || null 
+                })}
                 className="w-full px-2 py-1 border rounded text-xs"
               >
                 <option value="">Non traité</option>
@@ -125,7 +154,10 @@ export default function PointageRowEdit({
             {pointage.justification_retard && (
               <select
                 value={formData.statut_justification_retard || ''}
-                onChange={(e) => setFormData({ ...formData, statut_justification_retard: e.target.value || null })}
+                onChange={(e) => setFormData({ 
+                  ...formData, 
+                  statut_justification_retard: (e.target.value as 'en_attente' | 'justifiee' | 'rejetee') || null 
+                })}
                 className="w-full px-2 py-1 border rounded text-xs"
               >
                 <option value="">Non traité</option>
@@ -172,7 +204,7 @@ export default function PointageRowEdit({
             {pointage.retard_minutes}min
           </span>
         ) : (
-          <span className="text-green-600">À l'heure</span>
+          <span className="text-green-600">À l&apos;heure</span>
         )}
       </td>
       <td className="px-3 py-3 text-sm">

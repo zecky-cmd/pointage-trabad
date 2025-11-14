@@ -53,3 +53,5 @@ export interface StatsData {
 
 export type JustificationStatus = "en_attente" | "justifiee" | "rejetee"
 export type JustificationType = "retard" | "absence"
+
+

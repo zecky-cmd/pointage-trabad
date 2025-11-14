@@ -1,3 +1,4 @@
+
 "use client"
 
 import type { Pointage } from "@/types/pointage"
@@ -6,10 +7,18 @@ interface PointageButtonProps {
   type: "arrive" | "pause" | "reprise" | "depart"
   label: string
   icon: string
-  heurePointee: string | null | undefined
+  heurePointee: string | undefined
   serverTime: string
   pointageJour: Pointage | null
   onPointer: (type: "arrive" | "pause" | "reprise" | "depart") => Promise<void>
+}
+
+interface ButtonState {
+  disabled: boolean
+  style: string
+  text: string
+  time: string
+  canClick: boolean
 }
 
 export default function PointageButton({
@@ -21,7 +30,7 @@ export default function PointageButton({
   pointageJour,
   onPointer,
 }: PointageButtonProps) {
-  const getButtonState = () => {
+  const getButtonState = (): ButtonState => {
     if (heurePointee) {
       return {
         disabled: true,
@@ -145,15 +154,29 @@ export default function PointageButton({
 
   const state = getButtonState()
 
+  const handleClick = async (): Promise<void> => {
+    if (state.canClick) {
+      try {
+        await onPointer(type)
+      } catch (error) {
+        if (error instanceof Error) {
+          console.error('Erreur pointage:', error.message)
+        }
+      }
+    }
+  }
+
   return (
     <button
-      onClick={() => state.canClick && onPointer(type)}
+      onClick={handleClick}
       disabled={!state.canClick}
       className={`w-full p-4 border-2 rounded-lg transition-all ${state.style}`}
+      type="button"
+      aria-label={`Pointer ${label}`}
     >
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-3">
-          <span className="text-2xl">{icon}</span>
+          <span className="text-2xl" aria-hidden="true">{icon}</span>
           <div className="text-left">
             <p className="font-semibold text-gray-900">{label}</p>
             <p className="text-sm text-gray-600">{state.text}</p>

@@ -1,10 +1,11 @@
 import jsPDF from 'jspdf'
 import * as XLSX from 'xlsx'
+import type { Employee, Pointage, PointageStats, PointageWithJustifications } from '@/types/export'
 
 // Type pour jspdf-autotable (déclaration manuelle)
 declare module 'jspdf' {
   interface jsPDF {
-    autoTable: (options: any) => jsPDF
+    autoTable: (options: Record<string, unknown>) => jsPDF
   }
 }
 
@@ -13,8 +14,7 @@ if (typeof window !== 'undefined') {
   import('jspdf-autotable')
 }
 
-// Fonction pour calculer les heures travaillées
-function calculerHeures(pointage: any): string {
+function calculerHeures(pointage: PointageWithJustifications): string {
   if (!pointage.pointage_arrive || !pointage.pointage_depart) return '0h00'
 
   const arrive = new Date(`2000-01-01T${pointage.pointage_arrive}`)
@@ -34,13 +34,12 @@ function calculerHeures(pointage: any): string {
   return `${h}h${String(m).padStart(2, '0')}`
 }
 
-// Fonction pour exporter le rapport mensuel en PDF (employé)
 export async function exportRapportPDF(
-  employe: any,
+  employe: Employee,
   mois: string,
-  pointages: any[],
-  stats: any
-) {
+  pointages: PointageWithJustifications[],
+  stats: PointageStats
+): Promise<void> {
   const doc = new jsPDF()
 
   // En-tête
@@ -109,12 +108,11 @@ export async function exportRapportPDF(
   doc.save(`rapport_${employe.nom_employe}_${mois}.pdf`)
 }
 
-// Fonction pour exporter en Excel (Admin/RH)
 export function exportRapportExcel(
-  employes: any[],
-  pointages: any[],
+  employes: Employee[],
+  pointages: PointageWithJustifications[],
   mois: string
-) {
+): void {
   // Préparer les données
   const data = pointages.map(p => {
     const emp = employes.find(e => e.id_employe === p.id_employe)
@@ -177,7 +175,7 @@ export function exportRapportExcel(
       'Employé': `${emp.prenom_employe} ${emp.nom_employe}`,
       'Poste': emp.post_employe || '',
       'Jours travaillés': joursPresent,
-      'Heures travaillées': `${Math.floor(totalHeures)}h${Math.round((totalHeures % 1) * 60)}`,
+      'Heures travaillées': `${Math.floor(totalHeures)}h${String(Math.round((totalHeures % 1) * 60)).padStart(2, '0')}`,
       'Jours d\'absence': joursAbsent,
       'Total retard (min)': totalRetard,
     }
@@ -198,13 +196,12 @@ export function exportRapportExcel(
   XLSX.writeFile(wb, `rapport_pointages_${mois}.xlsx`)
 }
 
-// Fonction pour exporter un employé spécifique en Excel
 export function exportEmployeExcel(
-  employe: any,
-  pointages: any[],
+  employe: Employee,
+  pointages: PointageWithJustifications[],
   mois: string,
-  stats: any
-) {
+  stats: PointageStats
+): void {
   const data = pointages.map(p => ({
     'Date': new Date(p.date_pointage).toLocaleDateString('fr-FR'),
     'Arrivée': p.pointage_arrive || '',

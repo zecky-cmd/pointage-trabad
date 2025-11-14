@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { createClient } from "@/utils/supabase/client"
-import { useRouter, useSearchParams } from "next/navigation"
+import { useRouter, useSearchParams } from 'next/navigation'
 import PointageRowEdit from "@/components/PointageRowEdit"
 import Navigation from "@/components/navigation/Nav"
 
@@ -22,9 +22,11 @@ interface Pointage {
   pointage_pause: string | null
   pointage_reprise: string | null
   retard_minutes: number
-  statut: "present" | "absent" | "conge"
-  statut_justification_absence: "justifiee" | "non_justifiee" | null
-  statut_justification_retard: "justifiee" | "non_justifiee" | null
+  statut: "present" | "absent" | "conge" | "weekend"
+  statut_justification_absence: "en_attente" | "justifiee" | "rejetee" | null
+  statut_justification_retard: "en_attente" | "justifiee" | "rejetee" | null
+  justification_absence: string | null
+  justification_retard: string | null
 }
 
 interface Stats {
@@ -198,17 +200,33 @@ export default function DetailEmployePage({ params }: { params: { id: string } }
     setEditingId(null)
   }
 
-  const exportPDF = async (): Promise<void> => {
-    if (!employe) return
-    const { exportRapportPDF } = await import("@/utils/exports")
-    exportRapportPDF(employe, moisSelectionne, pointages, stats)
-  }
+  // const exportPDF = async (): Promise<void> => {
+  //   if (!employe) return
+  //   try {
+  //     const { exportRapportPDF } = await import("@/utils/exports")
+  //     exportRapportPDF(employe, moisSelectionne, pointages, stats)
+  //   } catch (err) {
+  //     if (err instanceof Error) {
+  //       console.error("Erreur export PDF:", err.message)
+  //     } else {
+  //       console.error("Erreur export PDF:", err)
+  //     }
+  //   }
+  // }
 
-  const exportExcel = async (): Promise<void> => {
-    if (!employe) return
-    const { exportEmployeExcel } = await import("@/utils/exports")
-    exportEmployeExcel(employe, pointages, moisSelectionne, stats)
-  }
+  // const exportExcel = async (): Promise<void> => {
+  //   if (!employe) return
+  //   try {
+  //     const { exportEmployeExcel } = await import("@/utils/exports")
+  //     exportEmployeExcel(employe, pointages, moisSelectionne, stats)
+  //   } catch (err) {
+  //     if (err instanceof Error) {
+  //       console.error("Erreur export Excel:", err.message)
+  //     } else {
+  //       console.error("Erreur export Excel:", err)
+  //     }
+  //   }
+  // }
 
   if (loading) {
     return <div className="min-h-screen bg-gray-50 flex items-center justify-center">Chargement...</div>
@@ -242,12 +260,12 @@ export default function DetailEmployePage({ params }: { params: { id: string } }
                 onChange={(e) => setMoisSelectionne(e.target.value)}
                 className="px-4 py-2 border border-gray-300 rounded-md"
               />
-              <button onClick={exportPDF} className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700">
+              {/* <button onClick={exportPDF} className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700">
                 📄 Exporter PDF
-              </button>
-              <button onClick={exportExcel} className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">
+              </button> */}
+              {/* <button onClick={exportExcel} className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">
                 📊 Exporter Excel
-              </button>
+              </button> */}
             </div>
           </div>
         </div>
