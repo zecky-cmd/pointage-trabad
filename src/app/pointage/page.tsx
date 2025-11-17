@@ -1,4 +1,3 @@
-
 'use client'
 
 import { useState, useEffect } from 'react'
@@ -6,14 +5,16 @@ import { createClient } from '@/utils/supabase/client'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import PointageButton from '@/components/PointageButton'
+import type { User } from '@supabase/supabase-js'
+import type { Pointage, ServerTimeData, ProfilUtilisateur } from '@/types/pointage_btn'
 
 export default function PointagePage() {
   const [loading, setLoading] = useState(true)
-  const [user, setUser] = useState<any>(null)
+  const [user, setUser] = useState<User | null>(null)
   const [employeId, setEmployeId] = useState<number | null>(null)
   const [serverTime, setServerTime] = useState<string>('')
   const [serverDate, setServerDate] = useState<string>('')
-  const [pointageJour, setPointageJour] = useState<any>(null)
+  const [pointageJour, setPointageJour] = useState<Pointage | null>(null)
 
   const router = useRouter()
   const supabase = createClient()
@@ -45,13 +46,14 @@ export default function PointagePage() {
       if (!profil?.id_employe) {
         throw new Error('Employé non trouvé')
       }
-      setEmployeId(profil.id_employe)
+      const profilData = profil as ProfilUtilisateur
+      setEmployeId(profilData.id_employe)
 
       // Récupérer l'heure serveur
       await updateServerTime()
 
       // Récupérer le pointage du jour
-      await loadPointageJour(profil.id_employe)
+      await loadPointageJour(profilData.id_employe)
     } catch (error) {
       console.error('Erreur chargement:', error)
     } finally {
@@ -61,16 +63,22 @@ export default function PointagePage() {
 
   const updateServerTime = async () => {
     const { data } = await supabase.rpc('get_server_time')
-    if (data && data[0]) {
-      setServerTime(data[0].server_time)
-      setServerDate(data[0].server_date)
+    if (data && Array.isArray(data) && data.length > 0) {
+      const timeData = data[0] as ServerTimeData
+      setServerTime(timeData.server_time)
+      setServerDate(timeData.server_date)
     }
   }
 
-
   const loadPointageJour = async (empId: number) => {
     const { data: serverData } = await supabase.rpc('get_server_time')
-    const dateJour = serverData[0].server_date
+    if (!serverData || !Array.isArray(serverData) || serverData.length === 0) {
+      console.error('Erreur: impossible de récupérer la date serveur')
+      return
+    }
+
+    const timeData = serverData[0] as ServerTimeData
+    const dateJour = timeData.server_date
 
     const { data } = await supabase
       .from('pointage')
@@ -79,11 +87,18 @@ export default function PointagePage() {
       .eq('date_pointage', dateJour)
       .single()
 
-    setPointageJour(data)
+    if (data) {
+      setPointageJour(data as Pointage)
+    }
   }
 
   const handlePointer = async (type: 'arrive' | 'pause' | 'reprise' | 'depart') => {
     try {
+      if (!employeId) {
+        alert('Erreur: ID employé introuvable')
+        return
+      }
+
       const response = await fetch('/api/pointage/pointer', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -98,7 +113,7 @@ export default function PointagePage() {
       }
 
       // Rafraîchir le pointage
-      await loadPointageJour(employeId!)
+      await loadPointageJour(employeId)
       
       // Message de succès
       alert(`✅ ${type.charAt(0).toUpperCase() + type.slice(1)} pointée à ${result.heure}`)
@@ -209,15 +224,16 @@ export default function PointagePage() {
           </div>
 
           {/* Afficher le retard si existe */}
-          {pointageJour?.retard_minutes > 0 && (
+          {pointageJour && pointageJour.retard_minutes > 0 && (
             <div className="mt-6 p-4 bg-orange-50 border border-orange-200 rounded">
               <p className="text-orange-800">
                 ⚠️ Retard de {pointageJour.retard_minutes} minutes
               </p>
               {pointageJour.retard_minutes > 15 && !pointageJour.justification_retard && (
                 <Link 
-                href={"pointage/rapport"}
-                className="mt-2 text-sm text-orange-600 hover:text-orange-800 underline">
+                  href="/pointage/rapport"
+                  className="mt-2 text-sm text-orange-600 hover:text-orange-800 underline"
+                >
                   Justifier ce retard
                 </Link>
               )}
@@ -228,17 +244,3 @@ export default function PointagePage() {
     </div>
   )
 }
-
-
-/**
- * 
- * const {data: profil} = await supabase.from('profil_utilisateur').select('id_employe').eq('id_profil', user.id)
- * 
- * 
- * from('pointage').select('*')
- * .eq('id_employe', profil.id_employe)
- * 
- * 
- * 
- * 
- * **/

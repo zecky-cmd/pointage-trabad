@@ -19,6 +19,45 @@ export interface EmployeeProfile {
 }
 
 // typage des pointages journalière 
+export type PointageRow = {
+  id_pointage: number;
+  id_employe: number;
+  date_pointage: string;
+  pointage_arrive: string | null;
+  pointage_pause: string | null;
+  pointage_reprise: string | null;
+  pointage_depart: string | null;
+  commentaire: string | null;
+  created_at: string;
+  updated_at: string;
+  statut: string | null;
+  retard_minutes: number | null;
+  justification_absence: string | null;
+  justification_retard: string | null;
+  statut_justification_absence: string | null;
+  statut_justification_retard: string | null;
+  est_weekend: boolean;
+  est_ferie: boolean;
+};
+
+export type PointageInsert = {
+  id_employe: number;
+  date_pointage: string;
+  pointage_arrive?: string | null;
+  pointage_pause?: string | null;
+  pointage_reprise?: string | null;
+  pointage_depart?: string | null;
+  commentaire?: string | null;
+  statut?: string | null;
+  retard_minutes?: number | null;
+  justification_absence?: string | null;
+  justification_retard?: string | null;
+  statut_justification_absence?: string | null;
+  statut_justification_retard?: string | null;
+  est_weekend?: boolean;
+  est_ferie?: boolean;
+};
+
 
 
 export interface Pointage {

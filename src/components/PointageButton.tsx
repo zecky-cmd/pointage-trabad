@@ -1,14 +1,12 @@
-
 "use client"
 
-import type { Pointage } from "@/types/pointage"
-
+import type { Pointage } from "@/types/pointage_btn"
 
 interface PointageButtonProps {
   type: "arrive" | "pause" | "reprise" | "depart"
   label: string
   icon: string
-  heurePointee: string | undefined
+  heurePointee: string | null | undefined
   serverTime: string
   pointageJour: Pointage | null
   onPointer: (type: "arrive" | "pause" | "reprise" | "depart") => Promise<void>
@@ -32,7 +30,7 @@ export default function PointageButton({
   onPointer,
 }: PointageButtonProps) {
   const getButtonState = (): ButtonState => {
-    if (heurePointee) {
+    if (heurePointee !== undefined && heurePointee !== null) {
       return {
         disabled: true,
         style: "bg-green-100 border-green-300 cursor-not-allowed",
@@ -184,7 +182,7 @@ export default function PointageButton({
           </div>
         </div>
         <div className="text-right">
-          <p className={`text-lg font-mono font-bold ${heurePointee ? "text-green-600" : "text-gray-500"}`}>
+          <p className={`text-lg font-mono font-bold ${heurePointee !== undefined && heurePointee !== null ? "text-green-600" : "text-gray-500"}`}>
             {state.time}
           </p>
         </div>
