@@ -3,6 +3,7 @@
 
 import type { Pointage } from "@/types/pointage"
 
+
 interface PointageButtonProps {
   type: "arrive" | "pause" | "reprise" | "depart"
   label: string

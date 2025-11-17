@@ -18,6 +18,9 @@ export interface EmployeeProfile {
   employe?: Employee
 }
 
+// typage des pointages journalière 
+
+
 export interface Pointage {
   id_pointage: number
   id_employe: number
