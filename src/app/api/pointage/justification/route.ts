@@ -1,11 +1,8 @@
 
-
 import { createClient } from '@/utils/supabase/server'
 import { NextResponse } from 'next/server'
 
-// Types personnalisés
 type JustificationType = 'retard' | 'absence'
-
 interface JustificationRequestBody {
   id_pointage: string
   type: JustificationType
@@ -15,7 +12,6 @@ interface JustificationRequestBody {
 interface ProfilEmploye {
   id_employe: string
 }
-
 interface Pointage {
   id_pointage: string
   id_employe: string
@@ -32,18 +28,12 @@ export async function POST(request: Request) {
     
     const supabase = await createClient()
 
-    // Vérifier l'authentification
-    // const { data: { user } } = await supabase.auth.getUser()
-    // if (!user) {
-    //   return NextResponse.json({ error: 'Non authentifié' }, { status: 401 })
-    // }
     const { data: authData, error: authError } = await supabase.auth.getUser()
     const user = authData?.user
 
     if (!user || authError) {
       return NextResponse.json({ error: 'Non authentifié' }, { status: 401 })
     }
-
     // Récupérer l'ID employé
     const { data: profil, error: profileError } = await supabase
       .from('profil_utilisateur')
@@ -54,7 +44,6 @@ export async function POST(request: Request) {
     if (profileError || !profil?.id_employe) {
       return NextResponse.json({ error: 'Employé non trouvé' }, { status: 404 })
     }
-
     // Vérifier que le pointage appartient à l'employé
     const { data: pointage, error: pointageError } = await supabase
       .from('pointage')
@@ -66,7 +55,6 @@ export async function POST(request: Request) {
     if (pointageError || !pointage) {
       return NextResponse.json({ error: 'Pointage non trouvé' }, { status: 404 })
     }
-
     // Préparer les données de mise à jour
     const updateData: Partial<Pointage> = {}
     if (type === 'retard') {
@@ -76,7 +64,6 @@ export async function POST(request: Request) {
       updateData.justification_absence = justification
       updateData.statut_justification_absence = 'en_attente'
     }
-
     // Mettre à jour le pointage
     const { data, error } = await supabase
       .from('pointage')
@@ -84,7 +71,6 @@ export async function POST(request: Request) {
       .eq('id_pointage', id_pointage)
       .select()
       .single()
-
     if (error) throw error
 
     return NextResponse.json({
@@ -92,11 +78,9 @@ export async function POST(request: Request) {
       message: 'Justification envoyée avec succès',
       data,
     })
-
   } catch (error: unknown) {
     console.error('Erreur justification:', error)
     const message = error instanceof Error ? error.message : 'Erreur serveur'
-
     return NextResponse.json(
       { error: message }, { status: 500 }
     )

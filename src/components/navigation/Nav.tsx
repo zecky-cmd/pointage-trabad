@@ -1,8 +1,8 @@
 import Link from "next/link"
 
 type Props = {
-  href: string // ← URL de retour personnalisable
-  label?: string // ← texte du lien (optionnel)
+  href: string 
+  label?: string 
 }
 
 export default function Navigation({ href, label = "← Retour" }: Props) {

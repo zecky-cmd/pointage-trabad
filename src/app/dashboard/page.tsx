@@ -6,16 +6,13 @@ import { Clock, Users, FileText, Upload, Briefcase, Plus, ChevronRight } from "l
 
 export default async function DashboardPage() {
   const supabase = await createClient()
-
   // Récupérer l'utilisateur connecté
   const {
     data: { user },
   } = await supabase.auth.getUser()
-
   if (!user) {
     redirect("/login")
   }
-
   // Récupérer le profil et les informations de l'employé
   const { data: profil } = await supabase
     .from("profil_utilisateur")
@@ -31,7 +28,6 @@ export default async function DashboardPage() {
     `)
     .eq("id_profil", user.id)
     .single()
-
   // Compter les justifications en attente (Admin/RH seulement)
   let nbJustifications = 0
   if (profil && ["admin", "rh"].includes(profil.role)) {
@@ -42,7 +38,6 @@ export default async function DashboardPage() {
 
     nbJustifications = count || 0
   }
-
   // Si pas d'employé lié, afficher un message
   if (!profil?.id_employe) {
     return (
@@ -64,9 +59,7 @@ export default async function DashboardPage() {
       </div>
     )
   }
-
   const isAdmin = ["admin", "rh"].includes(profil?.role || "")
-
   return (
     <div className="min-h-screen bg-background">
       <header className="bg-card border-b border-border sticky top-0 z-50">
@@ -96,7 +89,6 @@ export default async function DashboardPage() {
           </div>
         </div>
       </header>
-
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Welcome Section */}
         <div className="mb-8">
@@ -105,7 +97,6 @@ export default async function DashboardPage() {
           </h2>
           <p className="text-muted-foreground">Gérez vos pointages et consultez vos informations professionnelles</p>
         </div>
-
         {/* Info Cards Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           {/* Email Card */}
@@ -115,13 +106,11 @@ export default async function DashboardPage() {
               {profil?.employe?.email_employe || user.email}
             </p>
           </div>
-
           {/* Position Card */}
           <div className="bg-card border border-border rounded-xl p-4 hover:border-primary/50 transition-colors">
             <p className="text-xs uppercase tracking-wide text-muted-foreground mb-2">Poste</p>
             <p className="text-sm font-semibold text-foreground">{profil?.employe?.post_employe || "Non défini"}</p>
           </div>
-
           {/* Department Card */}
           <div className="bg-card border border-border rounded-xl p-4 hover:border-primary/50 transition-colors">
             <p className="text-xs uppercase tracking-wide text-muted-foreground mb-2">Département</p>
@@ -129,7 +118,6 @@ export default async function DashboardPage() {
               {profil?.employe?.departement_employe || "Non défini"}
             </p>
           </div>
-
           {/* Role Card */}
           <div className="bg-card border border-border rounded-xl p-4 hover:border-primary/50 transition-colors">
             <p className="text-xs uppercase tracking-wide text-muted-foreground mb-2">Rôle</p>
@@ -138,7 +126,6 @@ export default async function DashboardPage() {
             </div>
           </div>
         </div>
-
         {/* Quick Actions Section */}
         <div className="mb-8">
           <h3 className="text-xl font-bold text-foreground mb-4">Actions rapides</h3>
@@ -156,7 +143,6 @@ export default async function DashboardPage() {
               </div>
               <ChevronRight className="absolute bottom-3 right-3 w-5 h-5 opacity-60 group-hover:opacity-100 transition-opacity" />
             </Link>
-
             {/* Admin Actions */}
             {isAdmin && (
               <>
@@ -186,7 +172,6 @@ export default async function DashboardPage() {
                     <p className="text-sm text-muted-foreground">Consultez les analyses</p>
                   </div>
                 </Link>
-
                 <Link
                   href="/pointage/import"
                   className="group relative bg-card border-2 border-blue-200 hover:border-blue-400 dark:border-blue-900 dark:hover:border-blue-700 rounded-xl p-6 hover:shadow-md transition-all duration-300"
@@ -197,7 +182,6 @@ export default async function DashboardPage() {
                     <p className="text-sm text-muted-foreground">Historique pointages</p>
                   </div>
                 </Link>
-
                 <Link
                   href="/employes"
                   className="group relative bg-card border-2 border-green-200 hover:border-green-400 dark:border-green-900 dark:hover:border-green-700 rounded-xl p-6 hover:shadow-md transition-all duration-300"
@@ -208,7 +192,6 @@ export default async function DashboardPage() {
                     <p className="text-sm text-muted-foreground">Gérez vos équipes</p>
                   </div>
                 </Link>
-
                 <Link
                   href="/employes/nouveau"
                   className="group relative bg-card border-2 border-cyan-200 hover:border-cyan-400 dark:border-cyan-900 dark:hover:border-cyan-700 rounded-xl p-6 hover:shadow-md transition-all duration-300"
@@ -219,7 +202,6 @@ export default async function DashboardPage() {
                     <p className="text-sm text-muted-foreground">Nouvel employé</p>
                   </div>
                 </Link>
-
                 <Link
                   href="/pointage/admin/jours-feries"
                   className="group relative bg-card border-2 border-red-200 hover:border-red-400 dark:border-red-900 dark:hover:border-red-700 rounded-xl p-6 hover:shadow-md transition-all duration-300"
@@ -234,7 +216,6 @@ export default async function DashboardPage() {
             )}
           </div>
         </div>
-
         {/* Footer Info */}
         <div className="text-center text-sm text-muted-foreground py-6 border-t border-border">
           <p>© 2025 Trabad Pointage. Tous droits réservés.</p>

@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 // import { createClient } from '@/utils/supabase/client'
-
 interface PointageData {
   id_pointage: number
   id_employe: string

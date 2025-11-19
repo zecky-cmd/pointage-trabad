@@ -14,7 +14,7 @@ interface EmployeeActionsProps {
 export default function EmployeeActions({ employeeId, statut, isAdmin }: EmployeeActionsProps) {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  // const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
 
   const handleToggleStatut = async () => {
     if (!confirm(`Voulez-vous vraiment ${statut === "actif" ? "désactiver" : "activer"} cet employé ?`)) {
