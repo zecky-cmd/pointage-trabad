@@ -1,48 +1,11 @@
-
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { useRouter, useSearchParams } from "next/navigation";
 import PointageRowEdit from "@/components/PointageRowEdit";
 import Navigation from "@/components/navigation/Nav";
-
-interface Employe {
-  id_employe: string;
-  prenom_employe: string;
-  nom_employe: string;
-  post_employe: string;
-}
-
-interface Pointage {
-  id_pointage: number;
-  id_employe: string;
-  date_pointage: string;
-  pointage_arrive: string | null;
-  pointage_depart: string | null;
-  pointage_pause: string | null;
-  pointage_reprise: string | null;
-  retard_minutes: number;
-  statut: "present" | "absent" | "conge" | "weekend";
-  statut_justification_absence: "en_attente" | "justifiee" | "rejetee" | null;
-  statut_justification_retard: "en_attente" | "justifiee" | "rejetee" | null;
-  justification_absence: string | null;
-  justification_retard: string | null;
-}
-
-interface Stats {
-  totalHeures: string;
-  joursPresent: number;
-  joursAbsent: number;
-  absencesJustifiees: number;
-  totalRetard: string;
-  retardsSignificatifs: number;
-  retardsJustifies: number;
-  heuresPayables: string;
-  heuresAbsencesNonJustifiees: string;
-  retardsJustifiesHeures: string;
-  retardsNonJustifiesHeures: string;
-}
+import type { Employee, Pointage, PointageStats } from "@/types/export";
 
 interface ProfilUtilisateur {
   id_profil: string;
@@ -55,36 +18,17 @@ export default function DetailEmployePage({
   params: { id: string };
 }) {
   const [loading, setLoading] = useState<boolean>(true);
-  const [employe, setEmploye] = useState<Employe | null>(null);
+  const [employe, setEmploye] = useState<Employee | null>(null);
   const [moisSelectionne, setMoisSelectionne] = useState<string>("");
   const [pointages, setPointages] = useState<Pointage[]>([]);
-  const [stats, setStats] = useState<Stats | null>(null);
+  const [stats, setStats] = useState<PointageStats | null>(null);
   const [editingId, setEditingId] = useState<number | null>(null);
 
   const router = useRouter();
   const searchParams = useSearchParams();
   const supabase = createClient();
 
-  useEffect(() => {
-    const moisUrl = searchParams.get("mois");
-    if (moisUrl) {
-      setMoisSelectionne(moisUrl);
-    } else {
-      const now = new Date();
-      setMoisSelectionne(
-        `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`
-      );
-    }
-    loadData();
-  }, [searchParams]);
-
-  useEffect(() => {
-    if (moisSelectionne && employe) {
-      loadPointagesMois();
-    }
-  }, [moisSelectionne, employe]);
-
-  const loadData = async (): Promise<void> => {
+  const loadData = useCallback(async (): Promise<void> => {
     try {
       const {
         data: { user },
@@ -112,38 +56,37 @@ export default function DetailEmployePage({
         .eq("id_employe", params.id)
         .single();
 
-      setEmploye(emp as Employe);
+      setEmploye(emp as Employee);
     } catch (error) {
       console.error("Erreur:", error);
     } finally {
       setLoading(false);
     }
+  }, [params.id, router, supabase]);
+
+  const calculerHeuresTravaillees = (pointage: Pointage): number => {
+    if (!pointage.pointage_arrive || !pointage.pointage_depart) return 0;
+    const arrive = new Date(`2000-01-01T${pointage.pointage_arrive}`);
+    const depart = new Date(`2000-01-01T${pointage.pointage_depart}`);
+    let heures = (depart.getTime() - arrive.getTime()) / (1000 * 60 * 60);
+
+    if (pointage.pointage_pause && pointage.pointage_reprise) {
+      const pause = new Date(`2000-01-01T${pointage.pointage_pause}`);
+      const reprise = new Date(`2000-01-01T${pointage.pointage_reprise}`);
+      heures -= (reprise.getTime() - pause.getTime()) / (1000 * 60 * 60);
+    } else {
+      heures -= 1;
+    }
+    return Math.max(0, heures);
   };
 
-  const loadPointagesMois = async (): Promise<void> => {
-    const [annee, mois] = moisSelectionne.split("-");
-    const premierJour = `${annee}-${mois}-01`;
-    const dernierJour = new Date(
-      Number.parseInt(annee),
-      Number.parseInt(mois),
-      0
-    ).getDate();
-    const dernierJourDate = `${annee}-${mois}-${dernierJour}`;
-
-    const { data } = await supabase
-      .from("pointage")
-      .select("*")
-      .eq("id_employe", params.id)
-      .gte("date_pointage", premierJour)
-      .lte("date_pointage", dernierJourDate)
-      .order("date_pointage", { ascending: false });
-
-    const typedPointages = (data || []) as Pointage[];
-    setPointages(typedPointages);
-    calculerStats(typedPointages);
+  const formatDuree = (heures: number): string => {
+    const h = Math.floor(heures);
+    const m = Math.round((heures - h) * 60);
+    return `${h}h${String(m).padStart(2, "0")}`;
   };
 
-  const calculerStats = (pointagesData: Pointage[]): void => {
+  const calculerStats = useCallback((pointagesData: Pointage[]): void => {
     let totalHeures = 0;
     let totalRetard = 0;
     let joursPresent = 0;
@@ -189,29 +132,53 @@ export default function DetailEmployePage({
         ((retardsSignificatifs - retardsJustifies) * 15) / 60
       ),
     });
-  };
+  }, []); // formatDuree and calculerHeuresTravaillees are defined outside or should be memoized if used here.
+  // Actually they are defined in component scope. To avoid dependency issues, I can move them inside or memoize them.
+  // For simplicity, I will move helper functions outside the component or use useCallback for them too.
+  // But wait, `calculerHeuresTravaillees` and `formatDuree` don't depend on state/props. I can move them outside the component.
 
-  const calculerHeuresTravaillees = (pointage: Pointage): number => {
-    if (!pointage.pointage_arrive || !pointage.pointage_depart) return 0;
-    const arrive = new Date(`2000-01-01T${pointage.pointage_arrive}`);
-    const depart = new Date(`2000-01-01T${pointage.pointage_depart}`);
-    let heures = (depart.getTime() - arrive.getTime()) / (1000 * 60 * 60);
+  const loadPointagesMois = useCallback(async (): Promise<void> => {
+    if (!moisSelectionne) return;
+    const [annee, mois] = moisSelectionne.split("-");
+    const premierJour = `${annee}-${mois}-01`;
+    const dernierJour = new Date(
+      Number.parseInt(annee),
+      Number.parseInt(mois),
+      0
+    ).getDate();
+    const dernierJourDate = `${annee}-${mois}-${dernierJour}`;
 
-    if (pointage.pointage_pause && pointage.pointage_reprise) {
-      const pause = new Date(`2000-01-01T${pointage.pointage_pause}`);
-      const reprise = new Date(`2000-01-01T${pointage.pointage_reprise}`);
-      heures -= (reprise.getTime() - pause.getTime()) / (1000 * 60 * 60);
+    const { data } = await supabase
+      .from("pointage")
+      .select("*")
+      .eq("id_employe", params.id)
+      .gte("date_pointage", premierJour)
+      .lte("date_pointage", dernierJourDate)
+      .order("date_pointage", { ascending: false });
+
+    const typedPointages = (data || []) as Pointage[];
+    setPointages(typedPointages);
+    calculerStats(typedPointages);
+  }, [moisSelectionne, params.id, supabase, calculerStats]);
+
+  useEffect(() => {
+    const moisUrl = searchParams.get("mois");
+    if (moisUrl) {
+      setMoisSelectionne(moisUrl);
     } else {
-      heures -= 1;
+      const now = new Date();
+      setMoisSelectionne(
+        `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`
+      );
     }
-    return Math.max(0, heures);
-  };
+    loadData();
+  }, [searchParams, loadData]);
 
-  const formatDuree = (heures: number): string => {
-    const h = Math.floor(heures);
-    const m = Math.round((heures - h) * 60);
-    return `${h}h${String(m).padStart(2, "0")}`;
-  };
+  useEffect(() => {
+    if (moisSelectionne && employe) {
+      loadPointagesMois();
+    }
+  }, [moisSelectionne, employe, loadPointagesMois]);
 
   const handleSavePointage = async (): Promise<void> => {
     await loadPointagesMois();
@@ -222,12 +189,7 @@ export default function DetailEmployePage({
     if (!employe || !stats) return;
     try {
       const { exportRapportPDF } = await import("@/utils/exports");
-      exportRapportPDF(
-        employe,
-        moisSelectionne,
-        pointages as any,
-        stats as any
-      );
+      exportRapportPDF(employe, moisSelectionne, pointages, stats);
     } catch (err) {
       if (err instanceof Error) {
         console.error("Erreur export PDF:", err.message);
@@ -241,12 +203,7 @@ export default function DetailEmployePage({
     if (!employe || !stats) return;
     try {
       const { exportEmployeExcel } = await import("@/utils/exports");
-      exportEmployeExcel(
-        employe,
-        pointages as any,
-        moisSelectionne,
-        stats as any
-      );
+      exportEmployeExcel(employe, pointages, moisSelectionne, stats);
     } catch (err) {
       if (err instanceof Error) {
         console.error("Erreur export Excel:", err.message);

@@ -1,4 +1,3 @@
-
 export interface Pointage {
   id_pointage: number;
   id_employe: string;
@@ -24,7 +23,7 @@ export interface Employee {
   post_employe: string;
 }
 
-export interface PointageWithJustifications extends Pointage {}
+export type PointageWithJustifications = Pointage;
 
 export interface PointageStats {
   totalHeures: string;
