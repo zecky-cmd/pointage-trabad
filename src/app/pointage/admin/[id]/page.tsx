@@ -1,119 +1,134 @@
-"use client"
 
-import { useState, useEffect } from "react"
-import { createClient } from "@/utils/supabase/client"
-import { useRouter, useSearchParams } from 'next/navigation'
-import PointageRowEdit from "@/components/PointageRowEdit"
-import Navigation from "@/components/navigation/Nav"
+"use client";
+
+import { useState, useEffect } from "react";
+import { createClient } from "@/utils/supabase/client";
+import { useRouter, useSearchParams } from "next/navigation";
+import PointageRowEdit from "@/components/PointageRowEdit";
+import Navigation from "@/components/navigation/Nav";
 
 interface Employe {
-  id_employe: string
-  prenom_employe: string
-  nom_employe: string
-  post_employe: string
+  id_employe: string;
+  prenom_employe: string;
+  nom_employe: string;
+  post_employe: string;
 }
 
 interface Pointage {
-  id_pointage: number
-  id_employe: string
-  date_pointage: string
-  pointage_arrive: string | null
-  pointage_depart: string | null
-  pointage_pause: string | null
-  pointage_reprise: string | null
-  retard_minutes: number
-  statut: "present" | "absent" | "conge" | "weekend"
-  statut_justification_absence: "en_attente" | "justifiee" | "rejetee" | null
-  statut_justification_retard: "en_attente" | "justifiee" | "rejetee" | null
-  justification_absence: string | null
-  justification_retard: string | null
+  id_pointage: number;
+  id_employe: string;
+  date_pointage: string;
+  pointage_arrive: string | null;
+  pointage_depart: string | null;
+  pointage_pause: string | null;
+  pointage_reprise: string | null;
+  retard_minutes: number;
+  statut: "present" | "absent" | "conge" | "weekend";
+  statut_justification_absence: "en_attente" | "justifiee" | "rejetee" | null;
+  statut_justification_retard: "en_attente" | "justifiee" | "rejetee" | null;
+  justification_absence: string | null;
+  justification_retard: string | null;
 }
 
 interface Stats {
-  totalHeures: string
-  joursPresent: number
-  joursAbsent: number
-  absencesJustifiees: number
-  totalRetard: string
-  retardsSignificatifs: number
-  retardsJustifies: number
-  heuresPayables: string
-  heuresAbsencesNonJustifiees: string
-  retardsJustifiesHeures: string
-  retardsNonJustifiesHeures: string
+  totalHeures: string;
+  joursPresent: number;
+  joursAbsent: number;
+  absencesJustifiees: number;
+  totalRetard: string;
+  retardsSignificatifs: number;
+  retardsJustifies: number;
+  heuresPayables: string;
+  heuresAbsencesNonJustifiees: string;
+  retardsJustifiesHeures: string;
+  retardsNonJustifiesHeures: string;
 }
 
 interface ProfilUtilisateur {
-  id_profil: string
-  role: "admin" | "rh" | "employe"
+  id_profil: string;
+  role: "admin" | "rh" | "employe";
 }
 
-export default function DetailEmployePage({ params }: { params: { id: string } }) {
-  const [loading, setLoading] = useState<boolean>(true)
-  const [employe, setEmploye] = useState<Employe | null>(null)
-  const [moisSelectionne, setMoisSelectionne] = useState<string>("")
-  const [pointages, setPointages] = useState<Pointage[]>([])
-  const [stats, setStats] = useState<Stats | null>(null)
-  const [editingId, setEditingId] = useState<number | null>(null)
+export default function DetailEmployePage({
+  params,
+}: {
+  params: { id: string };
+}) {
+  const [loading, setLoading] = useState<boolean>(true);
+  const [employe, setEmploye] = useState<Employe | null>(null);
+  const [moisSelectionne, setMoisSelectionne] = useState<string>("");
+  const [pointages, setPointages] = useState<Pointage[]>([]);
+  const [stats, setStats] = useState<Stats | null>(null);
+  const [editingId, setEditingId] = useState<number | null>(null);
 
-  const router = useRouter()
-  const searchParams = useSearchParams()
-  const supabase = createClient()
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const supabase = createClient();
 
   useEffect(() => {
-    const moisUrl = searchParams.get("mois")
+    const moisUrl = searchParams.get("mois");
     if (moisUrl) {
-      setMoisSelectionne(moisUrl)
+      setMoisSelectionne(moisUrl);
     } else {
-      const now = new Date()
-      setMoisSelectionne(`${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`)
+      const now = new Date();
+      setMoisSelectionne(
+        `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`
+      );
     }
-    loadData()
-  }, [searchParams])
+    loadData();
+  }, [searchParams]);
 
   useEffect(() => {
     if (moisSelectionne && employe) {
-      loadPointagesMois()
+      loadPointagesMois();
     }
-  }, [moisSelectionne, employe])
+  }, [moisSelectionne, employe]);
 
   const loadData = async (): Promise<void> => {
     try {
       const {
         data: { user },
-      } = await supabase.auth.getUser()
+      } = await supabase.auth.getUser();
       if (!user) {
-        router.push("/login")
-        return
+        router.push("/login");
+        return;
       }
 
       const { data: profil } = await supabase
         .from("profil_utilisateur")
         .select("role")
         .eq("id_profil", user.id)
-        .single()
+        .single();
 
-      const typedProfil = profil as ProfilUtilisateur | null
+      const typedProfil = profil as ProfilUtilisateur | null;
       if (!typedProfil || !["admin", "rh"].includes(typedProfil.role)) {
-        router.push("/dashboard")
-        return
+        router.push("/dashboard");
+        return;
       }
 
-      const { data: emp } = await supabase.from("employe").select("*").eq("id_employe", params.id).single()
+      const { data: emp } = await supabase
+        .from("employe")
+        .select("*")
+        .eq("id_employe", params.id)
+        .single();
 
-      setEmploye(emp as Employe)
+      setEmploye(emp as Employe);
     } catch (error) {
-      console.error("Erreur:", error)
+      console.error("Erreur:", error);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const loadPointagesMois = async (): Promise<void> => {
-    const [annee, mois] = moisSelectionne.split("-")
-    const premierJour = `${annee}-${mois}-01`
-    const dernierJour = new Date(Number.parseInt(annee), Number.parseInt(mois), 0).getDate()
-    const dernierJourDate = `${annee}-${mois}-${dernierJour}`
+    const [annee, mois] = moisSelectionne.split("-");
+    const premierJour = `${annee}-${mois}-01`;
+    const dernierJour = new Date(
+      Number.parseInt(annee),
+      Number.parseInt(mois),
+      0
+    ).getDate();
+    const dernierJourDate = `${annee}-${mois}-${dernierJour}`;
 
     const { data } = await supabase
       .from("pointage")
@@ -121,42 +136,43 @@ export default function DetailEmployePage({ params }: { params: { id: string } }
       .eq("id_employe", params.id)
       .gte("date_pointage", premierJour)
       .lte("date_pointage", dernierJourDate)
-      .order("date_pointage", { ascending: false })
+      .order("date_pointage", { ascending: false });
 
-    const typedPointages = (data || []) as Pointage[]
-    setPointages(typedPointages)
-    calculerStats(typedPointages)
-  }
+    const typedPointages = (data || []) as Pointage[];
+    setPointages(typedPointages);
+    calculerStats(typedPointages);
+  };
 
   const calculerStats = (pointagesData: Pointage[]): void => {
-    let totalHeures = 0
-    let totalRetard = 0
-    let joursPresent = 0
-    let joursAbsent = 0
-    let absencesJustifiees = 0
-    let retardsSignificatifs = 0
-    let retardsJustifies = 0
+    let totalHeures = 0;
+    let totalRetard = 0;
+    let joursPresent = 0;
+    let joursAbsent = 0;
+    let absencesJustifiees = 0;
+    let retardsSignificatifs = 0;
+    let retardsJustifies = 0;
 
     pointagesData.forEach((p) => {
       if (p.statut === "present") {
-        joursPresent++
-        totalHeures += calculerHeuresTravaillees(p)
+        joursPresent++;
+        totalHeures += calculerHeuresTravaillees(p);
       }
       if (p.statut === "absent") {
-        joursAbsent++
-        if (p.statut_justification_absence === "justifiee") absencesJustifiees++
+        joursAbsent++;
+        if (p.statut_justification_absence === "justifiee")
+          absencesJustifiees++;
       }
       if (p.retard_minutes > 0) {
-        totalRetard += p.retard_minutes
+        totalRetard += p.retard_minutes;
         if (p.retard_minutes > 15) {
-          retardsSignificatifs++
-          if (p.statut_justification_retard === "justifiee") retardsJustifies++
+          retardsSignificatifs++;
+          if (p.statut_justification_retard === "justifiee") retardsJustifies++;
         }
       }
-    })
+    });
 
-    const heuresTheoriques = (joursPresent + absencesJustifiees) * 8
-    const heuresAbsencesNonJustifiees = (joursAbsent - absencesJustifiees) * 8
+    const heuresTheoriques = (joursPresent + absencesJustifiees) * 8;
+    const heuresAbsencesNonJustifiees = (joursAbsent - absencesJustifiees) * 8;
 
     setStats({
       totalHeures: formatDuree(totalHeures),
@@ -169,41 +185,83 @@ export default function DetailEmployePage({ params }: { params: { id: string } }
       heuresPayables: formatDuree(heuresTheoriques),
       heuresAbsencesNonJustifiees: formatDuree(heuresAbsencesNonJustifiees),
       retardsJustifiesHeures: formatDuree((retardsJustifies * 15) / 60),
-      retardsNonJustifiesHeures: formatDuree(((retardsSignificatifs - retardsJustifies) * 15) / 60),
-    })
-  }
+      retardsNonJustifiesHeures: formatDuree(
+        ((retardsSignificatifs - retardsJustifies) * 15) / 60
+      ),
+    });
+  };
 
   const calculerHeuresTravaillees = (pointage: Pointage): number => {
-    if (!pointage.pointage_arrive || !pointage.pointage_depart) return 0
-    const arrive = new Date(`2000-01-01T${pointage.pointage_arrive}`)
-    const depart = new Date(`2000-01-01T${pointage.pointage_depart}`)
-    let heures = (depart.getTime() - arrive.getTime()) / (1000 * 60 * 60)
+    if (!pointage.pointage_arrive || !pointage.pointage_depart) return 0;
+    const arrive = new Date(`2000-01-01T${pointage.pointage_arrive}`);
+    const depart = new Date(`2000-01-01T${pointage.pointage_depart}`);
+    let heures = (depart.getTime() - arrive.getTime()) / (1000 * 60 * 60);
 
     if (pointage.pointage_pause && pointage.pointage_reprise) {
-      const pause = new Date(`2000-01-01T${pointage.pointage_pause}`)
-      const reprise = new Date(`2000-01-01T${pointage.pointage_reprise}`)
-      heures -= (reprise.getTime() - pause.getTime()) / (1000 * 60 * 60)
+      const pause = new Date(`2000-01-01T${pointage.pointage_pause}`);
+      const reprise = new Date(`2000-01-01T${pointage.pointage_reprise}`);
+      heures -= (reprise.getTime() - pause.getTime()) / (1000 * 60 * 60);
     } else {
-      heures -= 1
+      heures -= 1;
     }
-    return Math.max(0, heures)
-  }
+    return Math.max(0, heures);
+  };
 
   const formatDuree = (heures: number): string => {
-    const h = Math.floor(heures)
-    const m = Math.round((heures - h) * 60)
-    return `${h}h${String(m).padStart(2, "0")}`
-  }
+    const h = Math.floor(heures);
+    const m = Math.round((heures - h) * 60);
+    return `${h}h${String(m).padStart(2, "0")}`;
+  };
 
   const handleSavePointage = async (): Promise<void> => {
-    await loadPointagesMois()
-    setEditingId(null)
-  }
+    await loadPointagesMois();
+    setEditingId(null);
+  };
 
+  const exportPDF = async (): Promise<void> => {
+    if (!employe || !stats) return;
+    try {
+      const { exportRapportPDF } = await import("@/utils/exports");
+      exportRapportPDF(
+        employe,
+        moisSelectionne,
+        pointages as any,
+        stats as any
+      );
+    } catch (err) {
+      if (err instanceof Error) {
+        console.error("Erreur export PDF:", err.message);
+      } else {
+        console.error("Erreur export PDF:", err);
+      }
+    }
+  };
 
+  const exportExcel = async (): Promise<void> => {
+    if (!employe || !stats) return;
+    try {
+      const { exportEmployeExcel } = await import("@/utils/exports");
+      exportEmployeExcel(
+        employe,
+        pointages as any,
+        moisSelectionne,
+        stats as any
+      );
+    } catch (err) {
+      if (err instanceof Error) {
+        console.error("Erreur export Excel:", err.message);
+      } else {
+        console.error("Erreur export Excel:", err);
+      }
+    }
+  };
 
   if (loading) {
-    return <div className="min-h-screen bg-gray-50 flex items-center justify-center">Chargement...</div>
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        Chargement...
+      </div>
+    );
   }
 
   return (
@@ -219,7 +277,8 @@ export default function DetailEmployePage({ params }: { params: { id: string } }
               </div>
               <div>
                 <h1 className="text-2xl font-bold">
-                  Détail du mois pour {employe?.prenom_employe} {employe?.nom_employe}
+                  Détail du mois pour {employe?.prenom_employe}{" "}
+                  {employe?.nom_employe}
                 </h1>
                 <p className="text-gray-600">{employe?.post_employe}</p>
                 <p className="text-sm text-gray-500 mt-1">
@@ -234,10 +293,16 @@ export default function DetailEmployePage({ params }: { params: { id: string } }
                 onChange={(e) => setMoisSelectionne(e.target.value)}
                 className="px-4 py-2 border border-gray-300 rounded-md"
               />
-              <button  className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700">
+              <button
+                onClick={exportPDF}
+                className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+              >
                 📄 Exporter PDF
               </button>
-              <button  className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">
+              <button
+                onClick={exportExcel}
+                className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+              >
                 📊 Exporter Excel
               </button>
             </div>
@@ -248,38 +313,54 @@ export default function DetailEmployePage({ params }: { params: { id: string } }
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
             <div className="bg-white rounded-lg shadow p-4">
               <p className="text-sm text-gray-600">Heures Travaillées</p>
-              <p className="text-2xl font-bold text-blue-600">{stats.totalHeures}</p>
+              <p className="text-2xl font-bold text-blue-600">
+                {stats.totalHeures}
+              </p>
               <p className="text-xs text-gray-500">Heures effectives</p>
             </div>
             <div className="bg-white rounded-lg shadow p-4">
               <p className="text-sm text-gray-600">Absences Justifiées</p>
-              <p className="text-2xl font-bold text-green-600">{stats.absencesJustifiees * 8}h00</p>
+              <p className="text-2xl font-bold text-green-600">
+                {stats.absencesJustifiees * 8}h00
+              </p>
               <p className="text-xs text-gray-500">Heures payées</p>
             </div>
             <div className="bg-white rounded-lg shadow p-4">
               <p className="text-sm text-gray-600">Absences Non Justifiées</p>
-              <p className="text-2xl font-bold text-red-600">{stats.heuresAbsencesNonJustifiees}</p>
+              <p className="text-2xl font-bold text-red-600">
+                {stats.heuresAbsencesNonJustifiees}
+              </p>
               <p className="text-xs text-gray-500">Heures non payées</p>
             </div>
             <div className="bg-white rounded-lg shadow p-4">
               <p className="text-sm text-gray-600">Total Payable</p>
-              <p className="text-2xl font-bold text-green-600">{stats.heuresPayables}</p>
+              <p className="text-2xl font-bold text-green-600">
+                {stats.heuresPayables}
+              </p>
               <p className="text-xs text-gray-500">Pour rémunération</p>
             </div>
             <div className="bg-white rounded-lg shadow p-4">
               <p className="text-sm text-gray-600">Retards Justifiés</p>
-              <p className="text-2xl font-bold text-green-600">{stats.retardsJustifiesHeures}</p>
+              <p className="text-2xl font-bold text-green-600">
+                {stats.retardsJustifiesHeures}
+              </p>
               <p className="text-xs text-gray-500">Heures récupérées</p>
             </div>
             <div className="bg-white rounded-lg shadow p-4">
               <p className="text-sm text-gray-600">Retards Non Justifiés</p>
-              <p className="text-2xl font-bold text-red-600">{stats.retardsNonJustifiesHeures}</p>
+              <p className="text-2xl font-bold text-red-600">
+                {stats.retardsNonJustifiesHeures}
+              </p>
               <p className="text-xs text-gray-500">Heures déduites</p>
             </div>
             <div className="bg-white rounded-lg shadow p-4">
               <p className="text-sm text-gray-600">Total Retards</p>
-              <p className="text-2xl font-bold text-orange-600">{stats.totalRetard}</p>
-              <p className="text-xs text-gray-500">{stats.retardsSignificatifs} jours de retard</p>
+              <p className="text-2xl font-bold text-orange-600">
+                {stats.totalRetard}
+              </p>
+              <p className="text-xs text-gray-500">
+                {stats.retardsSignificatifs} jours de retard
+              </p>
             </div>
           </div>
         )}
@@ -288,16 +369,36 @@ export default function DetailEmployePage({ params }: { params: { id: string } }
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
-                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">Arrivée</th>
-                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">Pause</th>
-                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">Reprise</th>
-                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">Départ</th>
-                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">Heures</th>
-                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">Retard</th>
-                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">Statut</th>
-                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">Justification</th>
-                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  Date
+                </th>
+                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  Arrivée
+                </th>
+                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  Pause
+                </th>
+                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  Reprise
+                </th>
+                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  Départ
+                </th>
+                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  Heures
+                </th>
+                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  Retard
+                </th>
+                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  Statut
+                </th>
+                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  Justification
+                </th>
+                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  Actions
+                </th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
@@ -318,5 +419,5 @@ export default function DetailEmployePage({ params }: { params: { id: string } }
         </div>
       </main>
     </div>
-  )
+  );
 }
