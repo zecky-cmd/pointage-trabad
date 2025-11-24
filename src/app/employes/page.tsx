@@ -1,17 +1,17 @@
-import { createClient } from "@/utils/supabase/server"
-import { redirect } from "next/navigation"
-import Link from "next/link"
-import EmployeeActions from "@/components/EmployeeActions"
+import { createClient } from "@/utils/supabase/server";
+import { redirect } from "next/navigation";
+import Link from "next/link";
+import EmployeeActions from "@/components/EmployeeActions";
 
 export default async function EmployesPage() {
-  const supabase = await createClient()
+  const supabase = await createClient();
 
   const {
     data: { user },
-  } = await supabase.auth.getUser()
+  } = await supabase.auth.getUser();
 
   if (!user) {
-    redirect("/login")
+    redirect("/login");
   }
 
   // Vérifier que l'utilisateur est admin ou RH
@@ -19,43 +19,50 @@ export default async function EmployesPage() {
     .from("profil_utilisateur")
     .select("role")
     .eq("id_profil", user.id)
-    .single()
+    .single();
 
-  if (userProfilError || !userProfil || !["admin", "rh"].includes(userProfil.role)) {
-    redirect("/dashboard")
+  if (
+    userProfilError ||
+    !userProfil ||
+    !["admin", "rh"].includes(userProfil.role)
+  ) {
+    redirect("/dashboard");
   }
 
   // Récupérer tous les employés
   const { data: employes, error: employesError } = await supabase
     .from("employe")
     .select("*")
-    .order("created_at", { ascending: false })
+    .order("created_at", { ascending: false });
 
   if (employesError) {
-    console.error("Erreur lors de la récupération des employés:", employesError)
+    console.error(
+      "Erreur lors de la récupération des employés:",
+      employesError
+    );
     return (
       <div className="min-h-screen bg-gray-50">
         <div className="max-w-7xl mx-auto py-6 px-4">
           <p className="text-red-600">Erreur lors du chargement des employés</p>
         </div>
       </div>
-    )
+    );
   }
 
   // Récupérer tous les profils
   const { data: profils, error: profilsError } = await supabase
     .from("profil_utilisateur")
-    .select("id_employe, role, est_actif, derniere_connexion")
+    .select("id_employe, role, est_actif, derniere_connexion");
 
   if (profilsError) {
-    console.error("Erreur lors de la récupération des profils:", profilsError)
+    console.error("Erreur lors de la récupération des profils:", profilsError);
   }
 
   // Fusionner les données
   const employesAvecProfils = (employes || []).map((emp) => ({
     ...emp,
     profil: profils?.find((p) => p.id_employe === emp.id_employe) || null,
-  }))
+  }));
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -63,13 +70,19 @@ export default async function EmployesPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
             <div className="flex items-center space-x-4">
-              <Link href="/dashboard" className="text-blue-600 hover:text-blue-800">
+              <Link
+                href="/dashboard"
+                className="text-blue-600 hover:text-blue-800"
+              >
                 ← Retour
               </Link>
               <h1 className="text-xl font-bold">Gestion des Employés</h1>
             </div>
             <div className="flex items-center">
-              <Link href="/employes/nouveau" className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+              <Link
+                href="/employes/nouveau"
+                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+              >
                 + Nouvel Employé
               </Link>
             </div>
@@ -94,7 +107,9 @@ export default async function EmployesPage() {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Département
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rôle</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Rôle
+                </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Statut
                 </th>
@@ -112,13 +127,19 @@ export default async function EmployesPage() {
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-500">{employe.email_employe}</div>
+                    <div className="text-sm text-gray-500">
+                      {employe.email_employe}
+                    </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-500">{employe.post_employe || "-"}</div>
+                    <div className="text-sm text-gray-500">
+                      {employe.post_employe || "-"}
+                    </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-500">{employe.departement_employe || "-"}</div>
+                    <div className="text-sm text-gray-500">
+                      {employe.departement_employe || "-"}
+                    </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     {employe.profil ? (
@@ -134,7 +155,9 @@ export default async function EmployesPage() {
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span
                       className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                        employe.statut_employe === "actif" ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
+                        employe.statut_employe === "actif"
+                          ? "bg-green-100 text-green-800"
+                          : "bg-red-100 text-red-800"
                       }`}
                     >
                       {employe.statut_employe}
@@ -160,5 +183,5 @@ export default async function EmployesPage() {
         </div>
       </main>
     </div>
-  )
+  );
 }
