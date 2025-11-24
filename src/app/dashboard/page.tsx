@@ -143,6 +143,16 @@ export default async function DashboardPage() {
               </div>
               <ChevronRight className="absolute bottom-3 right-3 w-5 h-5 opacity-60 group-hover:opacity-100 transition-opacity" />
             </Link>
+            <Link
+              href="/pointage/rapport"
+              className="group relative bg-card border-2 border-red-200 hover:border-red-400 dark:border-red-900 dark:hover:border-red-700 rounded-xl p-6 hover:shadow-md transition-all duration-300"
+            >
+              <div className="relative">
+                <Briefcase className="w-8 h-8 mb-3 text-red-600 dark:text-red-400" />
+                <h4 className="font-semibold text-foreground mb-1">Voir les rapports</h4>
+                <p className="text-sm text-muted-foreground">Gérez les rapports</p>
+              </div>
+            </Link>
             {/* Admin Actions */}
             {isAdmin && (
               <>
@@ -210,6 +220,17 @@ export default async function DashboardPage() {
                     <Briefcase className="w-8 h-8 mb-3 text-red-600 dark:text-red-400" />
                     <h4 className="font-semibold text-foreground mb-1">Jours fériés</h4>
                     <p className="text-sm text-muted-foreground">Gérez les calendriers</p>
+                  </div>
+                </Link>
+
+                <Link
+                  href="pointage/detail"
+                  className="group relative bg-card border-2 border-red-200 hover:border-red-400 dark:border-red-900 dark:hover:border-red-700 rounded-xl p-6 hover:shadow-md transition-all duration-300"
+                >
+                  <div className="relative">
+                    <Briefcase className="w-8 h-8 mb-3 text-red-600 dark:text-red-400" />
+                    <h4 className="font-semibold text-foreground mb-1">Détails</h4>
+                    <p className="text-sm text-muted-foreground">Gérez les rapports</p>
                   </div>
                 </Link>
               </>
