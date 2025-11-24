@@ -1,22 +1,39 @@
-import { createClient } from "@/utils/supabase/server"
-import { redirect } from "next/navigation"
-import LogoutButton from "@/components/LogoutButton"
-import Link from "next/link"
-import { Clock, Users, FileText, Upload, Briefcase, Plus, ChevronRight } from "lucide-react"
+import { createClient } from "@/utils/supabase/server";
+import { redirect } from "next/navigation";
+import LogoutButton from "@/components/LogoutButton";
+import Link from "next/link";
+import {
+  Clock,
+  Users,
+  FileText,
+  Upload,
+  Briefcase,
+  Plus,
+  ChevronRight,
+  LayoutDashboard,
+  Mail,
+  Building,
+  UserCircle,
+} from "lucide-react";
+import LiveEmployeeStatus from "@/components/LiveEmployeeStatus";
 
 export default async function DashboardPage() {
-  const supabase = await createClient()
+  const supabase = await createClient();
+
   // Récupérer l'utilisateur connecté
   const {
     data: { user },
-  } = await supabase.auth.getUser()
+  } = await supabase.auth.getUser();
+
   if (!user) {
-    redirect("/login")
+    redirect("/login");
   }
+
   // Récupérer le profil et les informations de l'employé
   const { data: profil } = await supabase
     .from("profil_utilisateur")
-    .select(`
+    .select(
+      `
       *,
       employe:id_employe (
         prenom_employe,
@@ -25,26 +42,36 @@ export default async function DashboardPage() {
         post_employe,
         departement_employe
       )
-    `)
+    `
+    )
     .eq("id_profil", user.id)
-    .single()
+    .single();
+
   // Compter les justifications en attente (Admin/RH seulement)
-  let nbJustifications = 0
+  let nbJustifications = 0;
   if (profil && ["admin", "rh"].includes(profil.role)) {
     const { count } = await supabase
       .from("pointage")
       .select("*", { count: "exact", head: true })
-      .or("statut_justification_absence.eq.en_attente,statut_justification_retard.eq.en_attente")
+      .or(
+        "statut_justification_absence.eq.en_attente,statut_justification_retard.eq.en_attente"
+      );
 
-    nbJustifications = count || 0
+    nbJustifications = count || 0;
   }
+
   // Si pas d'employé lié, afficher un message
   if (!profil?.id_employe) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <div className="bg-card border border-border rounded-xl shadow-lg p-8 max-w-md w-full">
-          <h2 className="text-2xl font-bold text-destructive mb-4">Profil incomplet</h2>
-          <p className="text-foreground mb-4">Votre compte n&apos;est pas lié à un employé. Contactez l&apos;administrateur.</p>
+          <h2 className="text-2xl font-bold text-destructive mb-4">
+            Profil incomplet
+          </h2>
+          <p className="text-foreground mb-4">
+            Votre compte n&apos;est pas lié à un employé. Contactez
+            l&apos;administrateur.
+          </p>
           <p className="text-sm text-muted-foreground bg-muted p-4 rounded-lg mb-6">
             Email: {user.email}
             <br />
@@ -57,191 +84,318 @@ export default async function DashboardPage() {
           <LogoutButton />
         </div>
       </div>
-    )
+    );
   }
-  const isAdmin = ["admin", "rh"].includes(profil?.role || "")
+
+  const isAdmin = ["admin", "rh"].includes(profil?.role || "");
+
   return (
-    <div className="min-h-screen bg-background">
-      <header className="bg-card border-b border-border sticky top-0 z-50">
+    <div className="min-h-screen bg-background selection:bg-primary/20">
+      {/* Glassmorphism Header */}
+      <header className="bg-background/80 backdrop-blur-md border-b border-border sticky top-0 z-50 transition-all duration-300">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-            <div className="flex items-center gap-2">
-              <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center text-primary-foreground font-bold text-sm">
-                PT
+            <div className="flex items-center gap-3">
+              <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center text-primary-foreground shadow-lg shadow-primary/20">
+                <LayoutDashboard className="w-5 h-5" />
               </div>
-              <h1 className="text-lg font-bold text-foreground">Trabad Pointage</h1>
+              <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/70">
+                Trabad Pointage
+              </h1>
             </div>
-            <div className="flex items-center gap-3 sm:gap-4">
-              <div className="hidden sm:block text-right">
+
+            <div className="flex items-center gap-4">
+              <div className="hidden md:flex flex-col items-end">
                 <p className="text-sm font-semibold text-foreground">
-                  {profil?.employe?.prenom_employe } {profil?.employe?.nom_employe}
+                  {profil?.employe?.prenom_employe}{" "}
+                  {profil?.employe?.nom_employe}
                 </p>
-                <p className="text-xs text-muted-foreground capitalize">{profil?.role}</p>
+                <span className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary font-medium capitalize">
+                  {profil?.role}
+                </span>
               </div>
-              <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                <span className="text-sm font-semibold text-primary">
+              <div className="h-10 w-10 rounded-full bg-gradient-to-tr from-primary/20 to-secondary flex items-center justify-center border border-border/50 shadow-sm">
+                <span className="text-sm font-bold text-primary">
                   {profil?.employe?.prenom_employe?.charAt(0)}
                   {profil?.employe?.nom_employe?.charAt(0)}
                 </span>
               </div>
-              <LogoutButton />
+              <div className="pl-2 border-l border-border">
+                <LogoutButton />
+              </div>
             </div>
           </div>
         </div>
       </header>
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Welcome Section */}
-        <div className="mb-8">
-          <h2 className="text-3xl sm:text-4xl font-bold text-foreground mb-2">
-            Bienvenue, {profil?.employe?.prenom_employe || user.email} 
-          </h2>
-          <p className="text-muted-foreground">Gérez vos pointages et consultez vos informations professionnelles</p>
+
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-10">
+        {/* Hero / Welcome Section */}
+        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-primary/5 via-background to-secondary/20 border border-border/50 p-8 sm:p-10 shadow-sm">
+          <div className="relative z-10">
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-foreground mb-3 tracking-tight">
+              Bonjour,{" "}
+              <span className="text-primary">
+                {profil?.employe?.prenom_employe}
+              </span>{" "}
+              👋
+            </h2>
+            <p className="text-lg text-muted-foreground max-w-2xl">
+              Bienvenue sur votre espace personnel. Gérez vos pointages,
+              consultez vos rapports et accédez à vos informations en un clic.
+            </p>
+          </div>
+          <div className="absolute top-0 right-0 -mt-10 -mr-10 w-64 h-64 bg-primary/10 rounded-full blur-3xl opacity-50 pointer-events-none"></div>
+          <div className="absolute bottom-0 left-0 -mb-10 -ml-10 w-40 h-40 bg-secondary/20 rounded-full blur-2xl opacity-50 pointer-events-none"></div>
         </div>
-        {/* Info Cards Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+
+        {/* Live Status Board (Admin/RH Only) */}
+        {isAdmin && (
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <div className="h-6 w-1 bg-primary rounded-full"></div>
+              <h3 className="text-xl font-bold text-foreground">
+                Suivi en temps réel
+              </h3>
+            </div>
+            <div className="bg-card/50 border border-border/50 rounded-2xl p-6 backdrop-blur-sm">
+              <LiveEmployeeStatus />
+            </div>
+          </div>
+        )}
+
+        {/* Info Cards Grid (Bento Box Style) */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {/* Email Card */}
-          <div className="bg-card border border-border rounded-xl p-4 hover:border-primary/50 transition-colors">
-            <p className="text-xs uppercase tracking-wide text-muted-foreground mb-2">Email</p>
-            <p className="text-sm font-semibold text-foreground line-clamp-1">
-              {profil?.employe?.email_employe || user.email}
-            </p>
+          <div className="group bg-card hover:bg-accent/5 border border-border rounded-2xl p-5 transition-all duration-300 hover:shadow-md">
+            <div className="flex items-start justify-between mb-4">
+              <div className="p-2 bg-blue-500/10 text-blue-600 rounded-lg group-hover:scale-110 transition-transform duration-300">
+                <Mail className="w-5 h-5" />
+              </div>
+            </div>
+            <div>
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">
+                Email Professionnel
+              </p>
+              <p
+                className="text-sm font-semibold text-foreground truncate"
+                title={profil?.employe?.email_employe || user.email}
+              >
+                {profil?.employe?.email_employe || user.email}
+              </p>
+            </div>
           </div>
+
           {/* Position Card */}
-          <div className="bg-card border border-border rounded-xl p-4 hover:border-primary/50 transition-colors">
-            <p className="text-xs uppercase tracking-wide text-muted-foreground mb-2">Poste</p>
-            <p className="text-sm font-semibold text-foreground">{profil?.employe?.post_employe || "Non défini"}</p>
+          <div className="group bg-card hover:bg-accent/5 border border-border rounded-2xl p-5 transition-all duration-300 hover:shadow-md">
+            <div className="flex items-start justify-between mb-4">
+              <div className="p-2 bg-purple-500/10 text-purple-600 rounded-lg group-hover:scale-110 transition-transform duration-300">
+                <Briefcase className="w-5 h-5" />
+              </div>
+            </div>
+            <div>
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">
+                Poste Actuel
+              </p>
+              <p className="text-sm font-semibold text-foreground truncate">
+                {profil?.employe?.post_employe || "Non défini"}
+              </p>
+            </div>
           </div>
+
           {/* Department Card */}
-          <div className="bg-card border border-border rounded-xl p-4 hover:border-primary/50 transition-colors">
-            <p className="text-xs uppercase tracking-wide text-muted-foreground mb-2">Département</p>
-            <p className="text-sm font-semibold text-foreground">
-              {profil?.employe?.departement_employe || "Non défini"}
-            </p>
-          </div>
-          {/* Role Card */}
-          <div className="bg-card border border-border rounded-xl p-4 hover:border-primary/50 transition-colors">
-            <p className="text-xs uppercase tracking-wide text-muted-foreground mb-2">Rôle</p>
-            <div className="inline-block px-3 py-1 bg-primary/10 text-primary text-xs font-semibold rounded-full capitalize">
-              {profil?.role || "Non défini"}
+          <div className="group bg-card hover:bg-accent/5 border border-border rounded-2xl p-5 transition-all duration-300 hover:shadow-md">
+            <div className="flex items-start justify-between mb-4">
+              <div className="p-2 bg-emerald-500/10 text-emerald-600 rounded-lg group-hover:scale-110 transition-transform duration-300">
+                <Building className="w-5 h-5" />
+              </div>
+            </div>
+            <div>
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">
+                Département
+              </p>
+              <p className="text-sm font-semibold text-foreground truncate">
+                {profil?.employe?.departement_employe || "Non défini"}
+              </p>
             </div>
           </div>
         </div>
+
         {/* Quick Actions Section */}
-        <div className="mb-8">
-          <h3 className="text-xl font-bold text-foreground mb-4">Actions rapides</h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div>
+          <div className="flex items-center gap-2 mb-6">
+            <div className="h-6 w-1 bg-primary rounded-full"></div>
+            <h3 className="text-xl font-bold text-foreground">
+              Actions Rapides
+            </h3>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
             {/* Main Action - Time Tracking */}
             <Link
               href="/pointage"
-              className="group relative overflow-hidden bg-gradient-to-br from-primary to-primary/80 text-primary-foreground rounded-xl p-6 hover:shadow-lg transition-all duration-300"
+              className="col-span-1 sm:col-span-2 group relative overflow-hidden bg-gradient-to-br from-primary to-primary/90 text-primary-foreground rounded-2xl p-6 shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 transition-all duration-300 hover:-translate-y-1"
             >
-              <div className="absolute inset-0 opacity-0 group-hover:opacity-10 bg-white transition-opacity"></div>
-              <div className="relative">
-                <Clock className="w-8 h-8 mb-3" />
-                <h4 className="font-semibold text-lg mb-1">Gérer mes pointages</h4>
-                <p className="text-sm opacity-90">Enregistrez vos heures</p>
+              <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity transform group-hover:scale-110 duration-500">
+                <Clock className="w-24 h-24" />
               </div>
-              <ChevronRight className="absolute bottom-3 right-3 w-5 h-5 opacity-60 group-hover:opacity-100 transition-opacity" />
+              <div className="relative z-10 h-full flex flex-col justify-between">
+                <div className="p-3 bg-white/10 w-fit rounded-xl backdrop-blur-sm mb-4">
+                  <Clock className="w-6 h-6" />
+                </div>
+                <div>
+                  <h4 className="font-bold text-xl mb-1">
+                    Gérer mes pointages
+                  </h4>
+                  <p className="text-primary-foreground/80 text-sm">
+                    Enregistrez vos entrées et sorties
+                  </p>
+                </div>
+                <div className="mt-4 flex items-center text-sm font-medium opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-2 group-hover:translate-y-0">
+                  Accéder <ChevronRight className="w-4 h-4 ml-1" />
+                </div>
+              </div>
             </Link>
+
             <Link
               href="/pointage/rapport"
-              className="group relative bg-card border-2 border-red-200 hover:border-red-400 dark:border-red-900 dark:hover:border-red-700 rounded-xl p-6 hover:shadow-md transition-all duration-300"
+              className="group relative bg-card hover:bg-accent/5 border border-border rounded-2xl p-6 transition-all duration-300 hover:shadow-md hover:border-primary/30 hover:-translate-y-1"
             >
-              <div className="relative">
-                <Briefcase className="w-8 h-8 mb-3 text-red-600 dark:text-red-400" />
-                <h4 className="font-semibold text-foreground mb-1">Voir les rapports</h4>
-                <p className="text-sm text-muted-foreground">Gérez les rapports</p>
+              <div className="p-3 bg-red-500/10 text-red-600 w-fit rounded-xl mb-4 group-hover:scale-110 transition-transform duration-300">
+                <FileText className="w-6 h-6" />
               </div>
+              <h4 className="font-semibold text-foreground text-lg mb-1">
+                Mes Rapports
+              </h4>
+              <p className="text-sm text-muted-foreground">
+                Consultez votre historique
+              </p>
             </Link>
+
             {/* Admin Actions */}
             {isAdmin && (
               <>
                 <Link
                   href="/pointage/justifications"
-                  className="group relative bg-card border-2 border-orange-200 hover:border-orange-400 dark:border-orange-900 dark:hover:border-orange-700 rounded-xl p-6 hover:shadow-md transition-all duration-300"
+                  className="group relative bg-card hover:bg-accent/5 border border-border rounded-2xl p-6 transition-all duration-300 hover:shadow-md hover:border-orange-500/30 hover:-translate-y-1"
                 >
-                  <div className="relative">
-                    <FileText className="w-8 h-8 mb-3 text-orange-600 dark:text-orange-400" />
-                    <h4 className="font-semibold text-foreground mb-1">Justifications</h4>
-                    <p className="text-sm text-muted-foreground">Examinez les demandes</p>
+                  <div className="flex justify-between items-start">
+                    <div className="p-3 bg-orange-500/10 text-orange-600 w-fit rounded-xl mb-4 group-hover:scale-110 transition-transform duration-300">
+                      <FileText className="w-6 h-6" />
+                    </div>
                     {nbJustifications > 0 && (
-                      <div className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground text-xs font-bold rounded-full h-6 w-6 flex items-center justify-center shadow-md">
+                      <span className="flex h-6 w-6 items-center justify-center rounded-full bg-destructive text-xs font-bold text-destructive-foreground animate-pulse">
                         {nbJustifications}
-                      </div>
+                      </span>
                     )}
                   </div>
+                  <h4 className="font-semibold text-foreground text-lg mb-1">
+                    Justifications
+                  </h4>
+                  <p className="text-sm text-muted-foreground">
+                    Demandes en attente
+                  </p>
                 </Link>
 
                 <Link
                   href="/pointage/admin"
-                  className="group relative bg-card border-2 border-purple-200 hover:border-purple-400 dark:border-purple-900 dark:hover:border-purple-700 rounded-xl p-6 hover:shadow-md transition-all duration-300"
+                  className="group relative bg-card hover:bg-accent/5 border border-border rounded-2xl p-6 transition-all duration-300 hover:shadow-md hover:border-purple-500/30 hover:-translate-y-1"
                 >
-                  <div className="relative">
-                    <Clock className="w-8 h-8 mb-3 text-purple-600 dark:text-purple-400" />
-                    <h4 className="font-semibold text-foreground mb-1">Rapports</h4>
-                    <p className="text-sm text-muted-foreground">Consultez les analyses</p>
+                  <div className="p-3 bg-purple-500/10 text-purple-600 w-fit rounded-xl mb-4 group-hover:scale-110 transition-transform duration-300">
+                    <LayoutDashboard className="w-6 h-6" />
                   </div>
+                  <h4 className="font-semibold text-foreground text-lg mb-1">
+                    Vue Admin
+                  </h4>
+                  <p className="text-sm text-muted-foreground">
+                    Supervision globale
+                  </p>
                 </Link>
+
                 <Link
                   href="/pointage/import"
-                  className="group relative bg-card border-2 border-blue-200 hover:border-blue-400 dark:border-blue-900 dark:hover:border-blue-700 rounded-xl p-6 hover:shadow-md transition-all duration-300"
+                  className="group relative bg-card hover:bg-accent/5 border border-border rounded-2xl p-6 transition-all duration-300 hover:shadow-md hover:border-blue-500/30 hover:-translate-y-1"
                 >
-                  <div className="relative">
-                    <Upload className="w-8 h-8 mb-3 text-blue-600 dark:text-blue-400" />
-                    <h4 className="font-semibold text-foreground mb-1">Importer</h4>
-                    <p className="text-sm text-muted-foreground">Historique pointages</p>
+                  <div className="p-3 bg-blue-500/10 text-blue-600 w-fit rounded-xl mb-4 group-hover:scale-110 transition-transform duration-300">
+                    <Upload className="w-6 h-6" />
                   </div>
+                  <h4 className="font-semibold text-foreground text-lg mb-1">
+                    Import
+                  </h4>
+                  <p className="text-sm text-muted-foreground">
+                    Données externes
+                  </p>
                 </Link>
+
                 <Link
                   href="/employes"
-                  className="group relative bg-card border-2 border-green-200 hover:border-green-400 dark:border-green-900 dark:hover:border-green-700 rounded-xl p-6 hover:shadow-md transition-all duration-300"
+                  className="group relative bg-card hover:bg-accent/5 border border-border rounded-2xl p-6 transition-all duration-300 hover:shadow-md hover:border-green-500/30 hover:-translate-y-1"
                 >
-                  <div className="relative">
-                    <Users className="w-8 h-8 mb-3 text-green-600 dark:text-green-400" />
-                    <h4 className="font-semibold text-foreground mb-1">Employés</h4>
-                    <p className="text-sm text-muted-foreground">Gérez vos équipes</p>
+                  <div className="p-3 bg-green-500/10 text-green-600 w-fit rounded-xl mb-4 group-hover:scale-110 transition-transform duration-300">
+                    <Users className="w-6 h-6" />
                   </div>
+                  <h4 className="font-semibold text-foreground text-lg mb-1">
+                    Employés
+                  </h4>
+                  <p className="text-sm text-muted-foreground">
+                    Gestion d&apos;équipe
+                  </p>
                 </Link>
+
                 <Link
                   href="/employes/nouveau"
-                  className="group relative bg-card border-2 border-cyan-200 hover:border-cyan-400 dark:border-cyan-900 dark:hover:border-cyan-700 rounded-xl p-6 hover:shadow-md transition-all duration-300"
+                  className="group relative bg-card hover:bg-accent/5 border border-border rounded-2xl p-6 transition-all duration-300 hover:shadow-md hover:border-cyan-500/30 hover:-translate-y-1"
                 >
-                  <div className="relative">
-                    <Plus className="w-8 h-8 mb-3 text-cyan-600 dark:text-cyan-400" />
-                    <h4 className="font-semibold text-foreground mb-1">Créer</h4>
-                    <p className="text-sm text-muted-foreground">Nouvel employé</p>
+                  <div className="p-3 bg-cyan-500/10 text-cyan-600 w-fit rounded-xl mb-4 group-hover:scale-110 transition-transform duration-300">
+                    <Plus className="w-6 h-6" />
                   </div>
+                  <h4 className="font-semibold text-foreground text-lg mb-1">
+                    Nouveau
+                  </h4>
+                  <p className="text-sm text-muted-foreground">
+                    Créer un profil
+                  </p>
                 </Link>
                 <Link
                   href="/pointage/admin/jours-feries"
-                  className="group relative bg-card border-2 border-red-200 hover:border-red-400 dark:border-red-900 dark:hover:border-red-700 rounded-xl p-6 hover:shadow-md transition-all duration-300"
+                  className="group relative bg-card hover:bg-accent/5 border border-border rounded-2xl p-6 transition-all duration-300 hover:shadow-md hover:border-red-500/30 hover:-translate-y-1"
                 >
-                  <div className="relative">
-                    <Briefcase className="w-8 h-8 mb-3 text-red-600 dark:text-red-400" />
-                    <h4 className="font-semibold text-foreground mb-1">Jours fériés</h4>
-                    <p className="text-sm text-muted-foreground">Gérez les calendriers</p>
+                  <div className="p-3 bg-red-500/10 text-red-600 w-fit rounded-xl mb-4 group-hover:scale-110 transition-transform duration-300">
+                    <Briefcase className="w-6 h-6" />
                   </div>
+                  <h4 className="font-semibold text-foreground text-lg mb-1">
+                    Jours fériés
+                  </h4>
+                  <p className="text-sm text-muted-foreground">
+                    Gérez les calendriers
+                  </p>
                 </Link>
 
                 <Link
                   href="pointage/detail"
-                  className="group relative bg-card border-2 border-red-200 hover:border-red-400 dark:border-red-900 dark:hover:border-red-700 rounded-xl p-6 hover:shadow-md transition-all duration-300"
+                  className="group relative bg-card hover:bg-accent/5 border border-border rounded-2xl p-6 transition-all duration-300 hover:shadow-md hover:border-red-500/30 hover:-translate-y-1"
                 >
-                  <div className="relative">
-                    <Briefcase className="w-8 h-8 mb-3 text-red-600 dark:text-red-400" />
-                    <h4 className="font-semibold text-foreground mb-1">Détails</h4>
-                    <p className="text-sm text-muted-foreground">Gérez les rapports</p>
+                  <div className="p-3 bg-red-500/10 text-red-600 w-fit rounded-xl mb-4 group-hover:scale-110 transition-transform duration-300">
+                    <Briefcase className="w-6 h-6" />
                   </div>
+                  <h4 className="font-semibold text-foreground text-lg mb-1">
+                    Détails
+                  </h4>
+                  <p className="text-sm text-muted-foreground">
+                    Gérez les rapports
+                  </p>
                 </Link>
               </>
             )}
           </div>
         </div>
-        {/* Footer Info */}
-        <div className="text-center text-sm text-muted-foreground py-6 border-t border-border">
-          <p>© 2025 Trabad Pointage. Tous droits réservés.</p>
+
+        {/* Footer */}
+        <div className="text-center py-8 border-t border-border/50">
+          <p className="text-sm text-muted-foreground">
+            © {new Date().getFullYear()} Trabad Pointage. Tous droits réservés.
+          </p>
         </div>
       </main>
     </div>
-  )
+  );
 }

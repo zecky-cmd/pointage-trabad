@@ -21,6 +21,7 @@ export interface Employee {
   prenom_employe: string;
   nom_employe: string;
   post_employe: string;
+  departement_employe: string;
 }
 
 export type PointageWithJustifications = Pointage;
