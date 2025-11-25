@@ -23,7 +23,7 @@ interface Employe {
   nom_employe: string;
   email_employe: string;
   tel_employe: string | null;
-  poste_employe: string | null;
+  post_employe: string | null;
   departement_employe: string | null;
   profil_utilisateur?: ProfilUtilisateur[];
 }
@@ -84,7 +84,7 @@ export default function ModifierEmployePage({
         nom: employeTyped.nom_employe,
         email: employeTyped.email_employe,
         telephone: employeTyped.tel_employe || "",
-        poste: employeTyped.poste_employe || "",
+        poste: employeTyped.post_employe || "",
         departement: employeTyped.departement_employe || "",
         role: employeTyped.profil_utilisateur?.[0]?.role || "employe",
       });
@@ -114,7 +114,7 @@ export default function ModifierEmployePage({
           nom_employe: formData.nom,
           email_employe: formData.email,
           tel_employe: formData.telephone,
-          poste_employe: formData.poste,
+          post_employe: formData.poste,
           departement_employe: formData.departement,
         })
         .eq("id_employe", params.id);
@@ -135,8 +135,14 @@ export default function ModifierEmployePage({
         router.push("/employes");
       }, 1500);
     } catch (err: unknown) {
-      const message =
-        err instanceof Error ? err.message : "Une erreur est survenue";
+      console.error("Erreur complète:", err);
+      let message = "Une erreur est survenue";
+
+      if (err instanceof Error) {
+        message = err.message;
+      } else if (typeof err === "object" && err !== null && "message" in err) {
+        message = String((err as { message: unknown }).message);
+      }
       setError(message);
     } finally {
       setSaving(false);
