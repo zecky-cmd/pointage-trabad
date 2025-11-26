@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { Eye, Pencil, Power, Trash2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import Link from "next/link";
 
 interface EmployeeActionsProps {
@@ -81,41 +83,41 @@ export default function EmployeeActions({
   };
 
   return (
-    <div className="flex items-center space-x-2">
-      <Link
-        href={`/employes/${employeeId}`}
-        className="text-blue-600 hover:text-blue-900 font-medium"
-      >
-        Voir
-      </Link>
+    <div className="flex items-center gap-2">
+      <Button variant="ghost" size="icon" asChild title="Voir">
+        <Link href={`/employes/${employeeId}`}>
+          <Eye className="h-4 w-4 text-blue-600" />
+        </Link>
+      </Button>
 
-      <Link
-        href={`/employes/${employeeId}/modifier`}
-        className="text-green-600 hover:text-green-900 font-medium"
-      >
-        Modif
-      </Link>
+      <Button variant="ghost" size="icon" asChild title="Modifier">
+        <Link href={`/employes/${employeeId}/modifier`}>
+          <Pencil className="h-4 w-4 text-green-600" />
+        </Link>
+      </Button>
 
-      <button
+      <Button
+        variant="ghost"
+        size="icon"
         onClick={handleToggleStatut}
         disabled={loading}
-        className={`font-medium ${
-          statut === "actif"
-            ? "text-orange-600 hover:text-orange-900"
-            : "text-green-600 hover:text-green-900"
-        } disabled:opacity-50`}
+        title={statut === "actif" ? "Désactiver" : "Activer"}
+        className={statut === "actif" ? "text-orange-600" : "text-green-600"}
       >
-        {statut === "actif" ? "Désactiver" : "Activer"}
-      </button>
+        <Power className="h-4 w-4" />
+      </Button>
 
       {isAdmin && (
-        <button
+        <Button
+          variant="ghost"
+          size="icon"
           onClick={handleDelete}
           disabled={loading}
-          className="text-red-600 hover:text-red-900 font-medium disabled:opacity-50"
+          title="Supprimer"
+          className="text-red-600 hover:text-red-900 hover:bg-red-50"
         >
-          Sup
-        </button>
+          <Trash2 className="h-4 w-4" />
+        </Button>
       )}
     </div>
   );

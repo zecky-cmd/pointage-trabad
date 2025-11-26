@@ -6,6 +6,30 @@ import { useRouter, useSearchParams } from "next/navigation";
 import PointageRowEdit from "@/components/PointageRowEdit";
 import Navigation from "@/components/navigation/Nav";
 import type { Employee, Pointage, PointageStats } from "@/types/export";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import {
+  Calendar,
+  Clock,
+  FileText,
+  Download,
+  User,
+  Briefcase,
+  AlertCircle,
+  CheckCircle2,
+  XCircle,
+  ArrowLeft,
+} from "lucide-react";
+import Link from "next/link";
 
 interface ProfilUtilisateur {
   id_profil: string;
@@ -15,7 +39,7 @@ interface ProfilUtilisateur {
 export default function DetailEmployePage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
   const [loading, setLoading] = useState<boolean>(true);
   const [employe, setEmploye] = useState<Employee | null>(null);
@@ -23,12 +47,20 @@ export default function DetailEmployePage({
   const [pointages, setPointages] = useState<Pointage[]>([]);
   const [stats, setStats] = useState<PointageStats | null>(null);
   const [editingId, setEditingId] = useState<number | null>(null);
+  const [resolvedParams, setResolvedParams] = useState<{ id: string } | null>(
+    null
+  );
 
   const router = useRouter();
   const searchParams = useSearchParams();
   const supabase = createClient();
 
+  useEffect(() => {
+    params.then(setResolvedParams);
+  }, [params]);
+
   const loadData = useCallback(async (): Promise<void> => {
+    if (!resolvedParams) return;
     try {
       const {
         data: { user },
@@ -53,7 +85,7 @@ export default function DetailEmployePage({
       const { data: emp } = await supabase
         .from("employe")
         .select("*")
-        .eq("id_employe", params.id)
+        .eq("id_employe", resolvedParams.id)
         .single();
 
       setEmploye(emp as Employee);
@@ -62,7 +94,7 @@ export default function DetailEmployePage({
     } finally {
       setLoading(false);
     }
-  }, [params.id, router, supabase]);
+  }, [resolvedParams, router, supabase]);
 
   const calculerHeuresTravaillees = (pointage: Pointage): number => {
     if (!pointage.pointage_arrive || !pointage.pointage_depart) return 0;
@@ -132,13 +164,10 @@ export default function DetailEmployePage({
         ((retardsSignificatifs - retardsJustifies) * 15) / 60
       ),
     });
-  }, []); // formatDuree and calculerHeuresTravaillees are defined outside or should be memoized if used here.
-  // Actually they are defined in component scope. To avoid dependency issues, I can move them inside or memoize them.
-  // For simplicity, I will move helper functions outside the component or use useCallback for them too.
-  // But wait, `calculerHeuresTravaillees` and `formatDuree` don't depend on state/props. I can move them outside the component.
+  }, []);
 
   const loadPointagesMois = useCallback(async (): Promise<void> => {
-    if (!moisSelectionne) return;
+    if (!moisSelectionne || !resolvedParams) return;
     const [annee, mois] = moisSelectionne.split("-");
     const premierJour = `${annee}-${mois}-01`;
     const dernierJour = new Date(
@@ -151,7 +180,7 @@ export default function DetailEmployePage({
     const { data } = await supabase
       .from("pointage")
       .select("*")
-      .eq("id_employe", params.id)
+      .eq("id_employe", resolvedParams.id)
       .gte("date_pointage", premierJour)
       .lte("date_pointage", dernierJourDate)
       .order("date_pointage", { ascending: false });
@@ -159,7 +188,7 @@ export default function DetailEmployePage({
     const typedPointages = (data || []) as Pointage[];
     setPointages(typedPointages);
     calculerStats(typedPointages);
-  }, [moisSelectionne, params.id, supabase, calculerStats]);
+  }, [moisSelectionne, resolvedParams, supabase, calculerStats]);
 
   useEffect(() => {
     const moisUrl = searchParams.get("mois");
@@ -171,14 +200,19 @@ export default function DetailEmployePage({
         `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`
       );
     }
-    loadData();
-  }, [searchParams, loadData]);
+  }, [searchParams]);
 
   useEffect(() => {
-    if (moisSelectionne && employe) {
+    if (resolvedParams) {
+      loadData();
+    }
+  }, [resolvedParams, loadData]);
+
+  useEffect(() => {
+    if (moisSelectionne && employe && resolvedParams) {
       loadPointagesMois();
     }
-  }, [moisSelectionne, employe, loadPointagesMois]);
+  }, [moisSelectionne, employe, resolvedParams, loadPointagesMois]);
 
   const handleSavePointage = async (): Promise<void> => {
     await loadPointagesMois();
@@ -222,158 +256,268 @@ export default function DetailEmployePage({
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50/50">
       <Navigation href="/pointage/admin" />
-      <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-        <div className="bg-white rounded-lg shadow p-6 mb-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <div className="h-12 w-12 rounded-full bg-blue-500 flex items-center justify-center text-white font-bold text-lg">
-                {employe?.prenom_employe?.[0]}
-                {employe?.nom_employe?.[0]}
-              </div>
-              <div>
-                <h1 className="text-2xl font-bold">
-                  Détail du mois pour {employe?.prenom_employe}{" "}
-                  {employe?.nom_employe}
-                </h1>
-                <p className="text-gray-600">{employe?.post_employe}</p>
-                <p className="text-sm text-gray-500 mt-1">
-                  Horaires de travail : 8h30 - 17h30 (8h de travail effectif)
-                </p>
-              </div>
-            </div>
-            <div className="flex space-x-4">
-              <input
-                type="month"
-                value={moisSelectionne}
-                onChange={(e) => setMoisSelectionne(e.target.value)}
-                className="px-4 py-2 border border-gray-300 rounded-md"
-              />
-              <button
-                onClick={exportPDF}
-                className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
-              >
-                📄 Exporter PDF
-              </button>
-              <button
-                onClick={exportExcel}
-                className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
-              >
-                📊 Exporter Excel
-              </button>
+      <main className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8 space-y-8">
+        {/* Header Section */}
+        <div className="flex flex-col gap-6">
+          <div className="flex items-center gap-4">
+            <Button variant="outline" size="icon" asChild>
+              <Link href="/pointage/detail">
+                <ArrowLeft className="h-4 w-4" />
+              </Link>
+            </Button>
+            <div>
+              <h1 className="text-2xl font-bold tracking-tight">
+                Détail du mois
+              </h1>
+              <p className="text-muted-foreground">
+                Gestion des pointages et statistiques mensuelles
+              </p>
             </div>
           </div>
+
+          <Card>
+            <CardHeader className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 space-y-0 pb-6">
+              <div className="flex items-center gap-4">
+                <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-lg">
+                  {employe?.prenom_employe?.[0]}
+                  {employe?.nom_employe?.[0]}
+                </div>
+                <div>
+                  <CardTitle className="text-xl">
+                    {employe?.prenom_employe} {employe?.nom_employe}
+                  </CardTitle>
+                  <CardDescription className="flex items-center gap-2 mt-1">
+                    <Briefcase className="h-3.5 w-3.5" />
+                    {employe?.post_employe}
+                  </CardDescription>
+                </div>
+              </div>
+
+              <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
+                <div className="flex items-center gap-2 w-full sm:w-auto">
+                  <Calendar className="h-4 w-4 text-muted-foreground" />
+                  <Input
+                    type="month"
+                    value={moisSelectionne}
+                    onChange={(e) => setMoisSelectionne(e.target.value)}
+                    className="w-full sm:w-40"
+                  />
+                </div>
+                <div className="flex items-center gap-2 w-full sm:w-auto">
+                  <Button
+                    onClick={exportPDF}
+                    variant="outline"
+                    className="flex-1 sm:flex-none gap-2"
+                  >
+                    <FileText className="h-4 w-4 text-red-600" />
+                    PDF
+                  </Button>
+                  <Button
+                    onClick={exportExcel}
+                    variant="outline"
+                    className="flex-1 sm:flex-none gap-2"
+                  >
+                    <Download className="h-4 w-4 text-green-600" />
+                    Excel
+                  </Button>
+                </div>
+              </div>
+            </CardHeader>
+          </Card>
         </div>
 
+        {/* Stats Grid */}
         {stats && (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-            <div className="bg-white rounded-lg shadow p-4">
-              <p className="text-sm text-gray-600">Heures Travaillées</p>
-              <p className="text-2xl font-bold text-blue-600">
-                {stats.totalHeures}
-              </p>
-              <p className="text-xs text-gray-500">Heures effectives</p>
-            </div>
-            <div className="bg-white rounded-lg shadow p-4">
-              <p className="text-sm text-gray-600">Absences Justifiées</p>
-              <p className="text-2xl font-bold text-green-600">
-                {stats.absencesJustifiees * 8}h00
-              </p>
-              <p className="text-xs text-gray-500">Heures payées</p>
-            </div>
-            <div className="bg-white rounded-lg shadow p-4">
-              <p className="text-sm text-gray-600">Absences Non Justifiées</p>
-              <p className="text-2xl font-bold text-red-600">
-                {stats.heuresAbsencesNonJustifiees}
-              </p>
-              <p className="text-xs text-gray-500">Heures non payées</p>
-            </div>
-            <div className="bg-white rounded-lg shadow p-4">
-              <p className="text-sm text-gray-600">Total Payable</p>
-              <p className="text-2xl font-bold text-green-600">
-                {stats.heuresPayables}
-              </p>
-              <p className="text-xs text-gray-500">Pour rémunération</p>
-            </div>
-            <div className="bg-white rounded-lg shadow p-4">
-              <p className="text-sm text-gray-600">Retards Justifiés</p>
-              <p className="text-2xl font-bold text-green-600">
-                {stats.retardsJustifiesHeures}
-              </p>
-              <p className="text-xs text-gray-500">Heures récupérées</p>
-            </div>
-            <div className="bg-white rounded-lg shadow p-4">
-              <p className="text-sm text-gray-600">Retards Non Justifiés</p>
-              <p className="text-2xl font-bold text-red-600">
-                {stats.retardsNonJustifiesHeures}
-              </p>
-              <p className="text-xs text-gray-500">Heures déduites</p>
-            </div>
-            <div className="bg-white rounded-lg shadow p-4">
-              <p className="text-sm text-gray-600">Total Retards</p>
-              <p className="text-2xl font-bold text-orange-600">
-                {stats.totalRetard}
-              </p>
-              <p className="text-xs text-gray-500">
-                {stats.retardsSignificatifs} jours de retard
-              </p>
-            </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">
+                  Heures Travaillées
+                </CardTitle>
+                <Clock className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-blue-600">
+                  {stats.totalHeures}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Heures effectives
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">
+                  Absences Justifiées
+                </CardTitle>
+                <CheckCircle2 className="h-4 w-4 text-green-600" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-green-600">
+                  {stats.absencesJustifiees * 8}h00
+                </div>
+                <p className="text-xs text-muted-foreground">Heures payées</p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">
+                  Absences Non Justifiées
+                </CardTitle>
+                <XCircle className="h-4 w-4 text-red-600" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-red-600">
+                  {stats.heuresAbsencesNonJustifiees}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Heures non payées
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">
+                  Total Payable
+                </CardTitle>
+                <Briefcase className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-green-600">
+                  {stats.heuresPayables}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Pour rémunération
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">
+                  Retards Justifiés
+                </CardTitle>
+                <CheckCircle2 className="h-4 w-4 text-green-600" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-green-600">
+                  {stats.retardsJustifiesHeures}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Heures récupérées
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">
+                  Retards Non Justifiés
+                </CardTitle>
+                <AlertCircle className="h-4 w-4 text-red-600" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-red-600">
+                  {stats.retardsNonJustifiesHeures}
+                </div>
+                <p className="text-xs text-muted-foreground">Heures déduites</p>
+              </CardContent>
+            </Card>
+
+            <Card className="sm:col-span-2">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">
+                  Total Retards
+                </CardTitle>
+                <AlertCircle className="h-4 w-4 text-orange-600" />
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-baseline gap-2">
+                  <div className="text-2xl font-bold text-orange-600">
+                    {stats.totalRetard}
+                  </div>
+                  <span className="text-sm text-muted-foreground">
+                    ({stats.retardsSignificatifs} jours)
+                  </span>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Retards significatifs {">"} 15min
+                </p>
+              </CardContent>
+            </Card>
           </div>
         )}
 
-        <div className="bg-white rounded-lg shadow overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Date
-                </th>
-                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Arrivée
-                </th>
-                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Pause
-                </th>
-                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Reprise
-                </th>
-                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Départ
-                </th>
-                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Heures
-                </th>
-                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Retard
-                </th>
-                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Statut
-                </th>
-                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Justification
-                </th>
-                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {pointages.map((p) => (
-                <PointageRowEdit
-                  key={p.id_pointage}
-                  pointage={p}
-                  isEditing={editingId === p.id_pointage}
-                  onEdit={() => setEditingId(p.id_pointage)}
-                  onSave={handleSavePointage}
-                  onCancel={() => setEditingId(null)}
-                  calculerHeures={calculerHeuresTravaillees}
-                  formatDuree={formatDuree}
-                />
-              ))}
-            </tbody>
-          </table>
-        </div>
+        {/* Pointages Table */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Historique des pointages</CardTitle>
+            <CardDescription>
+              Détail quotidien des entrées et sorties
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="rounded-md border">
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-border">
+                  <thead className="bg-muted/50">
+                    <tr>
+                      <th className="px-3 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                        Date
+                      </th>
+                      <th className="px-3 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                        Arrivée
+                      </th>
+                      <th className="px-3 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                        Pause
+                      </th>
+                      <th className="px-3 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                        Reprise
+                      </th>
+                      <th className="px-3 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                        Départ
+                      </th>
+                      <th className="px-3 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                        Heures
+                      </th>
+                      <th className="px-3 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                        Retard
+                      </th>
+                      <th className="px-3 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                        Statut
+                      </th>
+                      <th className="px-3 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                        Justification
+                      </th>
+                      <th className="px-3 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                        Actions
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-border">
+                    {pointages.map((p) => (
+                      <PointageRowEdit
+                        key={p.id_pointage}
+                        pointage={p}
+                        isEditing={editingId === p.id_pointage}
+                        onEdit={() => setEditingId(p.id_pointage)}
+                        onSave={handleSavePointage}
+                        onCancel={() => setEditingId(null)}
+                        calculerHeures={calculerHeuresTravaillees}
+                        formatDuree={formatDuree}
+                      />
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </main>
     </div>
   );
