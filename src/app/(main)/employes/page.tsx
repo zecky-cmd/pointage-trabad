@@ -65,29 +65,17 @@ export default async function EmployesPage() {
   }));
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <nav className="bg-white shadow">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16">
-            <div className="flex items-center space-x-4">
-              <Link
-                href="/dashboard"
-                className="text-blue-600 hover:text-blue-800"
-              >
-                ← Retour
-              </Link>
-              <h1 className="text-xl font-bold">Gestion des Employés</h1>
-            </div>
-          </div>
-        </div>
-      </nav>
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold text-gray-900">
+          Gestion des Employés
+        </h1>
+      </div>
 
-      <main className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-        <EmployeesList
-          employees={employesAvecProfils as Employee[]}
-          userRole={userProfil.role}
-        />
-      </main>
+      <EmployeesList
+        employees={employesAvecProfils as Employee[]}
+        userRole={userProfil.role}
+      />
     </div>
   );
 }

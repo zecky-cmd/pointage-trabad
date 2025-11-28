@@ -169,151 +169,145 @@ export default function ModifierEmployePage({
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <nav className="bg-white shadow">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center h-16">
+    <div className="max-w-3xl mx-auto py-6 sm:px-6 lg:px-8">
+      <div className="mb-6">
+        <Link
+          href={`/employes/${params.id}`}
+          className="text-blue-600 hover:text-blue-800 flex items-center gap-2"
+        >
+          <span>←</span> Retour
+        </Link>
+      </div>
+
+      <div className="bg-white rounded-lg shadow p-6">
+        <h1 className="text-2xl font-bold mb-6">Modifier l&apos;employé</h1>
+
+        {error && (
+          <div className="mb-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+            {error}
+          </div>
+        )}
+
+        {success && (
+          <div className="mb-4 bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded">
+            Employé modifié avec succès ! Redirection...
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                Prénom *
+              </label>
+              <input
+                type="text"
+                required
+                value={formData.prenom}
+                onChange={(e) => handleInputChange("prenom", e.target.value)}
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                Nom *
+              </label>
+              <input
+                type="text"
+                required
+                value={formData.nom}
+                onChange={(e) => handleInputChange("nom", e.target.value)}
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              Email *
+            </label>
+            <input
+              type="email"
+              required
+              value={formData.email}
+              onChange={(e) => handleInputChange("email", e.target.value)}
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              Téléphone
+            </label>
+            <input
+              type="tel"
+              value={formData.telephone}
+              onChange={(e) => handleInputChange("telephone", e.target.value)}
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                Poste
+              </label>
+              <input
+                type="text"
+                value={formData.poste}
+                onChange={(e) => handleInputChange("poste", e.target.value)}
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                Département
+              </label>
+              <input
+                type="text"
+                value={formData.departement}
+                onChange={(e) =>
+                  handleInputChange("departement", e.target.value)
+                }
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              Rôle *
+            </label>
+            <select
+              value={formData.role}
+              onChange={(e) => handleRoleChange(e.target.value)}
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md"
+            >
+              <option value="employe">Employé</option>
+              <option value="rh">RH</option>
+              <option value="admin">Administrateur</option>
+            </select>
+          </div>
+
+          <div className="flex justify-end space-x-4 pt-4 border-t">
             <Link
               href={`/employes/${params.id}`}
-              className="text-blue-600 hover:text-blue-800"
+              className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
             >
-              ← Retour
+              Annuler
             </Link>
+            <button
+              type="submit"
+              disabled={saving}
+              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
+            >
+              {saving ? "Enregistrement..." : "Enregistrer"}
+            </button>
           </div>
-        </div>
-      </nav>
-
-      <main className="max-w-3xl mx-auto py-6 sm:px-6 lg:px-8">
-        <div className="bg-white rounded-lg shadow p-6">
-          <h1 className="text-2xl font-bold mb-6">Modifier l&apos;employé</h1>
-
-          {error && (
-            <div className="mb-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
-              {error}
-            </div>
-          )}
-
-          {success && (
-            <div className="mb-4 bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded">
-              Employé modifié avec succès ! Redirection...
-            </div>
-          )}
-
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Prénom *
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={formData.prenom}
-                  onChange={(e) => handleInputChange("prenom", e.target.value)}
-                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Nom *
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={formData.nom}
-                  onChange={(e) => handleInputChange("nom", e.target.value)}
-                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Email *
-              </label>
-              <input
-                type="email"
-                required
-                value={formData.email}
-                onChange={(e) => handleInputChange("email", e.target.value)}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Téléphone
-              </label>
-              <input
-                type="tel"
-                value={formData.telephone}
-                onChange={(e) => handleInputChange("telephone", e.target.value)}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md"
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Poste
-                </label>
-                <input
-                  type="text"
-                  value={formData.poste}
-                  onChange={(e) => handleInputChange("poste", e.target.value)}
-                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Département
-                </label>
-                <input
-                  type="text"
-                  value={formData.departement}
-                  onChange={(e) =>
-                    handleInputChange("departement", e.target.value)
-                  }
-                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Rôle *
-              </label>
-              <select
-                value={formData.role}
-                onChange={(e) => handleRoleChange(e.target.value)}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md"
-              >
-                <option value="employe">Employé</option>
-                <option value="rh">RH</option>
-                <option value="admin">Administrateur</option>
-              </select>
-            </div>
-
-            <div className="flex justify-end space-x-4 pt-4 border-t">
-              <Link
-                href={`/employes/${params.id}`}
-                className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
-              >
-                Annuler
-              </Link>
-              <button
-                type="submit"
-                disabled={saving}
-                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
-              >
-                {saving ? "Enregistrement..." : "Enregistrer"}
-              </button>
-            </div>
-          </form>
-        </div>
-      </main>
+        </form>
+      </div>
     </div>
   );
 }

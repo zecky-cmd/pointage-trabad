@@ -153,123 +153,101 @@ export default function PointagePage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50/50">
-      <nav className="bg-white border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16">
-            <div className="flex items-center space-x-4">
-              <Button variant="ghost" asChild>
-                <Link href="/dashboard" className="flex items-center gap-2">
-                  ← Retour
-                </Link>
-              </Button>
-              <h1 className="text-xl font-bold">Pointage</h1>
+    <div className="space-y-8">
+      {/* En-tête avec date et heure */}
+      <Card className="border-none shadow-md bg-gradient-to-r from-blue-600 to-blue-800 text-white">
+        <CardContent className="p-8 text-center">
+          <div className="flex flex-col items-center justify-center space-y-4">
+            <div className="flex items-center gap-2 text-blue-100">
+              <Calendar className="h-5 w-5" />
+              <h2 className="text-xl font-medium capitalize">
+                {serverDate && formatDate(serverDate)}
+              </h2>
             </div>
-            <div className="flex items-center">
-              <Button variant="outline" asChild>
-                <Link href="/pointage/rapport">📊 Mon rapport</Link>
-              </Button>
+            <div className="flex items-center gap-3">
+              <Clock className="h-8 w-8 text-blue-200" />
+              <p className="text-5xl font-mono font-bold tracking-wider">
+                {serverTime}
+              </p>
             </div>
           </div>
-        </div>
-      </nav>
+        </CardContent>
+      </Card>
 
-      <main className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8 space-y-8">
-        {/* En-tête avec date et heure */}
-        <Card className="border-none shadow-md bg-gradient-to-r from-blue-600 to-blue-800 text-white">
-          <CardContent className="p-8 text-center">
-            <div className="flex flex-col items-center justify-center space-y-4">
-              <div className="flex items-center gap-2 text-blue-100">
-                <Calendar className="h-5 w-5" />
-                <h2 className="text-xl font-medium capitalize">
-                  {serverDate && formatDate(serverDate)}
-                </h2>
-              </div>
+      {/* Grille de pointage */}
+      <div className="space-y-4">
+        <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+          <Clock className="h-5 w-5 text-primary" />
+          Pointer mes heures
+        </h3>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <PointageButton
+            type="arrive"
+            label="Arrivée"
+            icon="🏢"
+            heurePointee={pointageJour?.pointage_arrive}
+            serverTime={serverTime}
+            pointageJour={pointageJour}
+            onPointer={handlePointer}
+          />
+
+          <PointageButton
+            type="pause"
+            label="Pause"
+            icon="☕"
+            heurePointee={pointageJour?.pointage_pause}
+            serverTime={serverTime}
+            pointageJour={pointageJour}
+            onPointer={handlePointer}
+          />
+
+          <PointageButton
+            type="reprise"
+            label="Reprise"
+            icon="💼"
+            heurePointee={pointageJour?.pointage_reprise}
+            serverTime={serverTime}
+            pointageJour={pointageJour}
+            onPointer={handlePointer}
+          />
+
+          <PointageButton
+            type="depart"
+            label="Départ"
+            icon="🏠"
+            heurePointee={pointageJour?.pointage_depart}
+            serverTime={serverTime}
+            pointageJour={pointageJour}
+            onPointer={handlePointer}
+          />
+        </div>
+
+        {/* Afficher le retard si existe */}
+        {pointageJour && pointageJour.retard_minutes > 0 && (
+          <Card className="border-orange-200 bg-orange-50">
+            <CardContent className="p-4 flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <Clock className="h-8 w-8 text-blue-200" />
-                <p className="text-5xl font-mono font-bold tracking-wider">
-                  {serverTime}
+                <AlertTriangle className="h-5 w-5 text-orange-600" />
+                <p className="text-orange-800 font-medium">
+                  Retard de {pointageJour.retard_minutes} minutes détecté
                 </p>
               </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Grille de pointage */}
-        <div className="space-y-4">
-          <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-            <Clock className="h-5 w-5 text-primary" />
-            Pointer mes heures
-          </h3>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <PointageButton
-              type="arrive"
-              label="Arrivée"
-              icon="🏢"
-              heurePointee={pointageJour?.pointage_arrive}
-              serverTime={serverTime}
-              pointageJour={pointageJour}
-              onPointer={handlePointer}
-            />
-
-            <PointageButton
-              type="pause"
-              label="Pause"
-              icon="☕"
-              heurePointee={pointageJour?.pointage_pause}
-              serverTime={serverTime}
-              pointageJour={pointageJour}
-              onPointer={handlePointer}
-            />
-
-            <PointageButton
-              type="reprise"
-              label="Reprise"
-              icon="💼"
-              heurePointee={pointageJour?.pointage_reprise}
-              serverTime={serverTime}
-              pointageJour={pointageJour}
-              onPointer={handlePointer}
-            />
-
-            <PointageButton
-              type="depart"
-              label="Départ"
-              icon="🏠"
-              heurePointee={pointageJour?.pointage_depart}
-              serverTime={serverTime}
-              pointageJour={pointageJour}
-              onPointer={handlePointer}
-            />
-          </div>
-
-          {/* Afficher le retard si existe */}
-          {pointageJour && pointageJour.retard_minutes > 0 && (
-            <Card className="border-orange-200 bg-orange-50">
-              <CardContent className="p-4 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <AlertTriangle className="h-5 w-5 text-orange-600" />
-                  <p className="text-orange-800 font-medium">
-                    Retard de {pointageJour.retard_minutes} minutes détecté
-                  </p>
-                </div>
-                {pointageJour.retard_minutes > 15 &&
-                  !pointageJour.justification_retard && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="border-orange-300 text-orange-700 hover:bg-orange-100 hover:text-orange-800"
-                      asChild
-                    >
-                      <Link href="/pointage/rapport">Justifier</Link>
-                    </Button>
-                  )}
-              </CardContent>
-            </Card>
-          )}
-        </div>
-      </main>
+              {pointageJour.retard_minutes > 15 &&
+                !pointageJour.justification_retard && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="border-orange-300 text-orange-700 hover:bg-orange-100 hover:text-orange-800"
+                    asChild
+                  >
+                    <Link href="/pointage/rapport">Justifier</Link>
+                  </Button>
+                )}
+            </CardContent>
+          </Card>
+        )}
+      </div>
     </div>
   );
 }
