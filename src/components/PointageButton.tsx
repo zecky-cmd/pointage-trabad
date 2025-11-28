@@ -1,23 +1,27 @@
-"use client"
+"use client";
 
-import type { Pointage } from "@/types/pointage_btn"
+import type { Pointage } from "@/types/pointage_btn";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 
 interface PointageButtonProps {
-  type: "arrive" | "pause" | "reprise" | "depart"
-  label: string
-  icon: string
-  heurePointee: string | null | undefined
-  serverTime: string
-  pointageJour: Pointage | null
-  onPointer: (type: "arrive" | "pause" | "reprise" | "depart") => Promise<void>
+  type: "arrive" | "pause" | "reprise" | "depart";
+  label: string;
+  icon: string;
+  heurePointee: string | null | undefined;
+  serverTime: string;
+  pointageJour: Pointage | null;
+  onPointer: (type: "arrive" | "pause" | "reprise" | "depart") => Promise<void>;
 }
 
 interface ButtonState {
-  disabled: boolean
-  style: string
-  text: string
-  time: string
-  canClick: boolean
+  disabled: boolean;
+  variant: "default" | "secondary" | "destructive" | "outline" | "ghost";
+  className: string;
+  text: string;
+  time: string;
+  canClick: boolean;
 }
 
 export default function PointageButton({
@@ -30,14 +34,16 @@ export default function PointageButton({
   onPointer,
 }: PointageButtonProps) {
   const getButtonState = (): ButtonState => {
+    // Si déjà pointé
     if (heurePointee !== undefined && heurePointee !== null) {
       return {
         disabled: true,
-        style: "bg-green-100 border-green-300 cursor-not-allowed",
+        variant: "outline",
+        className: "bg-green-50 border-green-200 text-green-900 opacity-100",
         text: "✅ Pointé",
         time: heurePointee,
         canClick: false,
-      }
+      };
     }
 
     switch (type) {
@@ -45,148 +51,183 @@ export default function PointageButton({
         if (serverTime < "06:00:00") {
           return {
             disabled: true,
-            style: "bg-gray-100 border-gray-300 cursor-not-allowed",
-            text: "🔒 Verrouillé",
-            time: "Disponible à 6h00",
+            variant: "outline",
+            className: "bg-gray-100 text-gray-400 opacity-50",
+            text: "🔒 06h00",
+            time: "--:--",
             canClick: false,
-          }
+          };
         }
         return {
           disabled: false,
-          style: "bg-blue-50 border-blue-300 hover:bg-blue-100 cursor-pointer",
-          text: "🟢 Disponible",
-          time: "Cliquez pour pointer",
+          variant: "default",
+          className:
+            "bg-blue-600 hover:bg-blue-700 text-white shadow-lg hover:shadow-xl transform transition-all hover:-translate-y-1",
+          text: "Disponible",
+          time: "Maintenant",
           canClick: true,
-        }
+        };
 
       case "pause":
         if (!pointageJour?.pointage_arrive) {
           return {
             disabled: true,
-            style: "bg-gray-100 border-gray-300 cursor-not-allowed",
-            text: "⏸ Inactif",
-            time: "Pointez l'arrivée d'abord",
+            variant: "outline",
+            className: "bg-gray-100 text-gray-400 opacity-50",
+            text: "En attente",
+            time: "--:--",
             canClick: false,
-          }
+          };
         }
         if (pointageJour?.pointage_depart) {
           return {
             disabled: true,
-            style: "bg-gray-100 border-gray-300 cursor-not-allowed",
-            text: "🔒 Verrouillé",
-            time: "Départ déjà pointé",
+            variant: "outline",
+            className: "bg-gray-100 text-gray-400 opacity-50",
+            text: "Terminé",
+            time: "--:--",
             canClick: false,
-          }
+          };
         }
         if (serverTime < "12:30:00") {
           return {
             disabled: true,
-            style: "bg-gray-100 border-gray-300 cursor-not-allowed",
-            text: "🔒 Verrouillé",
-            time: "Disponible à 12h30",
+            variant: "outline",
+            className: "bg-gray-100 text-gray-500 opacity-75",
+            text: "🔒 12h30",
+            time: "--:--",
             canClick: false,
-          }
+          };
         }
         return {
           disabled: false,
-          style: "bg-orange-50 border-orange-300 hover:bg-orange-100 cursor-pointer",
-          text: "🟢 Disponible",
-          time: "Cliquez pour pointer",
+          variant: "default",
+          className:
+            "bg-orange-500 hover:bg-orange-600 text-white shadow-lg hover:shadow-xl transform transition-all hover:-translate-y-1",
+          text: "Disponible",
+          time: "Maintenant",
           canClick: true,
-        }
+        };
 
       case "reprise":
         if (!pointageJour?.pointage_pause) {
           return {
             disabled: true,
-            style: "bg-gray-100 border-gray-300 cursor-not-allowed",
-            text: "⏸ Inactif",
-            time: "Pointez la pause d'abord",
+            variant: "outline",
+            className: "bg-gray-100 text-gray-400 opacity-50",
+            text: "En attente",
+            time: "--:--",
             canClick: false,
-          }
+          };
         }
         return {
           disabled: false,
-          style: "bg-purple-50 border-purple-300 hover:bg-purple-100 cursor-pointer",
-          text: "🟢 Disponible",
-          time: "Cliquez pour pointer",
+          variant: "default",
+          className:
+            "bg-purple-600 hover:bg-purple-700 text-white shadow-lg hover:shadow-xl transform transition-all hover:-translate-y-1",
+          text: "Disponible",
+          time: "Maintenant",
           canClick: true,
-        }
+        };
 
       case "depart":
         if (!pointageJour?.pointage_arrive) {
           return {
             disabled: true,
-            style: "bg-gray-100 border-gray-300 cursor-not-allowed",
-            text: "⏸ Inactif",
-            time: "Pointez l'arrivée d'abord",
+            variant: "outline",
+            className: "bg-gray-100 text-gray-400 opacity-50",
+            text: "En attente",
+            time: "--:--",
             canClick: false,
-          }
+          };
         }
         if (serverTime < "17:30:00") {
           return {
             disabled: true,
-            style: "bg-gray-100 border-gray-300 cursor-not-allowed",
-            text: "🔒 Verrouillé",
-            time: "Disponible à 17h30",
+            variant: "outline",
+            className: "bg-gray-100 text-gray-500 opacity-75",
+            text: "🔒 17h30",
+            time: "--:--",
             canClick: false,
-          }
+          };
         }
         return {
           disabled: false,
-          style: "bg-red-50 border-red-300 hover:bg-red-100 cursor-pointer",
-          text: "🟢 Disponible",
-          time: "Cliquez pour pointer",
+          variant: "destructive",
+          className:
+            "shadow-lg hover:shadow-xl transform transition-all hover:-translate-y-1",
+          text: "Disponible",
+          time: "Maintenant",
           canClick: true,
-        }
+        };
 
       default:
         return {
           disabled: true,
-          style: "bg-gray-100 border-gray-300 cursor-not-allowed",
+          variant: "outline",
+          className: "opacity-50",
           text: "Inactif",
-          time: "",
+          time: "--:--",
           canClick: false,
-        }
+        };
     }
-  }
+  };
 
-  const state = getButtonState()
+  const state = getButtonState();
 
   const handleClick = async (): Promise<void> => {
     if (state.canClick) {
       try {
-        await onPointer(type)
+        await onPointer(type);
       } catch (error) {
         if (error instanceof Error) {
-          console.error('Erreur pointage:', error.message)
+          console.error("Erreur pointage:", error.message);
         }
       }
     }
-  }
+  };
 
   return (
-    <button
-      onClick={handleClick}
-      disabled={!state.canClick}
-      className={`w-full p-4 border-2 rounded-lg transition-all ${state.style}`}
-      type="button"
-      aria-label={`Pointer ${label}`}
+    <Card
+      className={cn(
+        "relative overflow-hidden transition-all duration-200",
+        state.canClick
+          ? "hover:border-primary/50"
+          : "border-gray-200 bg-gray-50",
+        state.className
+      )}
     >
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-3">
-          <span className="text-2xl" aria-hidden="true">{icon}</span>
-          <div className="text-left">
-            <p className="font-semibold text-gray-900">{label}</p>
-            <p className="text-sm text-gray-600">{state.text}</p>
-          </div>
+      <button
+        onClick={handleClick}
+        disabled={!state.canClick}
+        className="w-full h-full p-6 flex flex-col items-center justify-center gap-4 text-center min-h-[160px]"
+        type="button"
+        aria-label={`Pointer ${label}`}
+      >
+        <div
+          className={cn(
+            "text-4xl transition-transform duration-200",
+            state.canClick && "scale-110"
+          )}
+        >
+          {icon}
         </div>
-        <div className="text-right">
-          <p className={`text-lg font-mono font-bold ${heurePointee !== undefined && heurePointee !== null ? "text-green-600" : "text-gray-500"}`}>
-            {state.time}
+
+        <div className="space-y-1">
+          <h3 className="font-bold text-lg leading-none">{label}</h3>
+          <p className="text-xs font-medium uppercase tracking-wider opacity-90">
+            {state.text}
           </p>
         </div>
-      </div>
-    </button>
-  )
+
+        {state.time !== "--:--" && state.time !== "Maintenant" && (
+          <div className="absolute bottom-4 left-0 right-0">
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-white/20 backdrop-blur-sm">
+              {state.time}
+            </span>
+          </div>
+        )}
+      </button>
+    </Card>
+  );
 }
