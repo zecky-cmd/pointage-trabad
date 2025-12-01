@@ -60,7 +60,7 @@ export default function LoginPage() {
             Connexion
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600">
-            Système de gestion des employés
+            Système de pointage
           </p>
         </div>
 

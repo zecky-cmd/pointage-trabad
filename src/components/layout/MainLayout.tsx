@@ -1,12 +1,13 @@
 "use client";
 
 import { useState } from "react";
+import { User } from "@supabase/supabase-js";
 import Sidebar from "./Sidebar";
 import TopBar from "./TopBar";
 
 interface MainLayoutProps {
   children: React.ReactNode;
-  user: any;
+  user: User | null;
   role: string;
 }
 
