@@ -14,6 +14,8 @@ import type {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { AlertTriangle, Clock, Calendar } from "lucide-react";
+import { useGeolocation } from "@/hooks/useGeolocation";
+import { isWithinRadius } from "@/utils/geolocation";
 
 export default function PointagePage() {
   const [loading, setLoading] = useState(true);
@@ -101,6 +103,13 @@ export default function PointagePage() {
     }
   };
 
+  const {
+    latitude,
+    longitude,
+    error: geoError,
+    loading: geoLoading,
+  } = useGeolocation();
+
   const handlePointer = async (
     type: "arrive" | "pause" | "reprise" | "depart"
   ) => {
@@ -108,6 +117,44 @@ export default function PointagePage() {
       if (!employeId) {
         alert("Erreur: ID employé introuvable");
         return;
+      }
+
+      // Geolocation Check
+      const companyLat = parseFloat(process.env.NEXT_PUBLIC_COMPANY_LAT || "0");
+      const companyLng = parseFloat(process.env.NEXT_PUBLIC_COMPANY_LNG || "0");
+      const allowedRadius = parseFloat(
+        process.env.NEXT_PUBLIC_ALLOWED_RADIUS_METERS || "100"
+      );
+
+      if (companyLat && companyLng) {
+        if (geoLoading) {
+          alert("Veuillez patienter, localisation en cours...");
+          return;
+        }
+
+        if (geoError) {
+          alert(geoError);
+          return;
+        }
+
+        if (latitude && longitude) {
+          const isAllowed = isWithinRadius(
+            latitude,
+            longitude,
+            companyLat,
+            companyLng,
+            allowedRadius
+          );
+          if (!isAllowed) {
+            alert(
+              "Vous devez être dans les locaux de l'entreprise pour pointer."
+            );
+            return;
+          }
+        } else {
+          alert("Impossible de récupérer votre position.");
+          return;
+        }
       }
 
       const response = await fetch("/api/pointage/pointer", {

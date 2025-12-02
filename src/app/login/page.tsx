@@ -1,10 +1,10 @@
 "use client";
 
-import type React from "react";
-
 import { useState } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { useRouter } from "next/navigation";
+import { useGeolocation } from "@/hooks/useGeolocation";
+import { isWithinRadius } from "@/utils/geolocation";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -13,11 +13,59 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
   const supabase = createClient();
+  const {
+    latitude,
+    longitude,
+    error: geoError,
+    loading: geoLoading,
+  } = useGeolocation();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
+
+    // Geolocation Check
+    const companyLat = parseFloat(process.env.NEXT_PUBLIC_COMPANY_LAT || "0");
+    const companyLng = parseFloat(process.env.NEXT_PUBLIC_COMPANY_LNG || "0");
+    const allowedRadius = parseFloat(
+      process.env.NEXT_PUBLIC_ALLOWED_RADIUS_METERS || "100"
+    );
+
+    if (companyLat && companyLng) {
+      if (geoLoading) {
+        setError("Veuillez patienter, localisation en cours...");
+        setLoading(false);
+        return;
+      }
+
+      if (geoError) {
+        setError(geoError);
+        setLoading(false);
+        return;
+      }
+
+      if (latitude && longitude) {
+        const isAllowed = isWithinRadius(
+          latitude,
+          longitude,
+          companyLat,
+          companyLng,
+          allowedRadius
+        );
+        if (!isAllowed) {
+          setError(
+            "Vous devez être dans les locaux de l'entreprise pour vous connecter."
+          );
+          setLoading(false);
+          return;
+        }
+      } else {
+        setError("Impossible de récupérer votre position.");
+        setLoading(false);
+        return;
+      }
+    }
 
     try {
       const { data, error: signInError } =
