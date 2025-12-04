@@ -126,21 +126,29 @@ export default function PointagePage() {
         process.env.NEXT_PUBLIC_ALLOWED_RADIUS_METERS || "100"
       );
 
-      if (companyLat && companyLng) {
+      const currentLat = latitude;
+      const currentLng = longitude;
+
+      // Si la localisation n'est pas encore chargée, on essaie de la récupérer
+      if (!currentLat || !currentLng) {
+        // On pourrait forcer un rafraichissement ici si nécessaire,
+        // mais useGeolocation devrait déjà le faire.
+        // Si c'est critique, on peut bloquer.
         if (geoLoading) {
           alert("Veuillez patienter, localisation en cours...");
           return;
         }
-
         if (geoError) {
-          alert(geoError);
+          alert("Erreur de localisation: " + geoError);
           return;
         }
+      }
 
-        if (latitude && longitude) {
+      if (companyLat && companyLng) {
+        if (currentLat && currentLng) {
           const isAllowed = isWithinRadius(
-            latitude,
-            longitude,
+            currentLat,
+            currentLng,
             companyLat,
             companyLng,
             allowedRadius
@@ -152,7 +160,10 @@ export default function PointagePage() {
             return;
           }
         } else {
-          alert("Impossible de récupérer votre position.");
+          // Si on a des coordonnées d'entreprise mais pas de position utilisateur
+          alert(
+            "Impossible de récupérer votre position pour vérifier la zone."
+          );
           return;
         }
       }
@@ -160,7 +171,11 @@ export default function PointagePage() {
       const response = await fetch("/api/pointage/pointer", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ type }),
+        body: JSON.stringify({
+          type,
+          latitude: currentLat,
+          longitude: currentLng,
+        }),
       });
 
       const result = await response.json();

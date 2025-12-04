@@ -4,6 +4,8 @@ import { useState, useEffect } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { useRouter } from "next/navigation";
 import Navigation from "@/components/navigation/Nav";
+import { MapPin } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface Employe {
   id_employe: string;
@@ -29,6 +31,14 @@ interface Pointage {
   statut: "present" | "absent" | "weekend";
   statut_justification_absence?: "justifiee" | "non_justifiee" | null;
   statut_justification_retard?: "justifiee" | "non_justifiee" | null;
+  lat_arrive?: number | null;
+  lon_arrive?: number | null;
+  lat_depart?: number | null;
+  lon_depart?: number | null;
+  lat_pause?: number | null;
+  lon_pause?: number | null;
+  lat_reprise?: number | null;
+  lon_reprise?: number | null;
 }
 
 interface Stats {
@@ -223,6 +233,31 @@ export default function RapportMensuelPage() {
     });
   };
 
+  const LocationLink = ({
+    lat,
+    lon,
+    label,
+  }: {
+    lat?: number | null;
+    lon?: number | null;
+    label: string;
+  }) => {
+    if (!lat || !lon) return null;
+
+    return (
+      <a
+        href={`https://www.google.com/maps/search/?api=1&query=${lat},${lon}`}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="ml-2 inline-flex text-blue-500 hover:text-blue-700 transition-colors"
+        onClick={(e) => e.stopPropagation()}
+        title={`Voir la position ${label}`}
+      >
+        <MapPin className="h-3 w-3" />
+      </a>
+    );
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -341,16 +376,44 @@ export default function RapportMensuelPage() {
                   {formatDate(p.date_pointage)}
                 </td>
                 <td className="px-4 py-3 whitespace-nowrap text-sm font-mono">
-                  {p.pointage_arrive || "----"}
+                  <div className="flex items-center">
+                    {p.pointage_arrive || "----"}
+                    <LocationLink
+                      lat={p.lat_arrive}
+                      lon={p.lon_arrive}
+                      label="d'arrivée"
+                    />
+                  </div>
                 </td>
                 <td className="px-4 py-3 whitespace-nowrap text-sm font-mono">
-                  {p.pointage_pause || "----"}
+                  <div className="flex items-center">
+                    {p.pointage_pause || "----"}
+                    <LocationLink
+                      lat={p.lat_pause}
+                      lon={p.lon_pause}
+                      label="de pause"
+                    />
+                  </div>
                 </td>
                 <td className="px-4 py-3 whitespace-nowrap text-sm font-mono">
-                  {p.pointage_reprise || "----"}
+                  <div className="flex items-center">
+                    {p.pointage_reprise || "----"}
+                    <LocationLink
+                      lat={p.lat_reprise}
+                      lon={p.lon_reprise}
+                      label="de reprise"
+                    />
+                  </div>
                 </td>
                 <td className="px-4 py-3 whitespace-nowrap text-sm font-mono">
-                  {p.pointage_depart || "----"}
+                  <div className="flex items-center">
+                    {p.pointage_depart || "----"}
+                    <LocationLink
+                      lat={p.lat_depart}
+                      lon={p.lon_depart}
+                      label="de départ"
+                    />
+                  </div>
                 </td>
                 <td className="px-4 py-3 whitespace-nowrap text-sm font-semibold">
                   {formatDuree(calculerHeuresTravaillees(p))}

@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { Users, Clock, FileText } from "lucide-react";
+import { Users, Clock, FileText,  DatabaseBackup } from "lucide-react";
+
 
 interface QuickLinksGridProps {
   role?: string;
@@ -28,6 +29,14 @@ const links = [
     href: "/pointage/justifications",
     icon: FileText,
     color: "bg-orange-500",
+    roles: ["admin", "rh"],
+  },
+  {
+    title: "Rapport Mensuel",
+    description: "Gérer les rapports mensuels",
+    href: "/pointage/detail",
+    icon: DatabaseBackup,
+    color: "bg-red-500",
     roles: ["admin", "rh"],
   },
 ];
