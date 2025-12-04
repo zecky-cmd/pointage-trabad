@@ -32,7 +32,7 @@ const links = [
     roles: ["admin", "rh"],
   },
   {
-    title: "Rapport Mensuel",
+    title: "Gestion des rapports",
     description: "Gérer les rapports mensuels",
     href: "/pointage/detail",
     icon: DatabaseBackup,
