@@ -54,7 +54,7 @@ export default async function DashboardPage() {
           value={totalEmployees || 0}
           icon={Users}
           iconClassName="bg-blue-50 text-blue-600"
-          trend={{ value: 12, label: "ce mois", positive: true }}
+          // trend={{ value: 12, label: "ce mois", positive: true }}
         />
         <StatsCard
           title="Présents Aujourd'hui"
@@ -68,13 +68,13 @@ export default async function DashboardPage() {
           icon={UserX}
           iconClassName="bg-orange-50 text-orange-600"
         />
-        <StatsCard
+        {/* <StatsCard
           title="Heures Travaillées"
           value="142h" // Placeholder
           icon={Clock}
           iconClassName="bg-purple-50 text-purple-600"
           trend={{ value: 5, label: "vs hier", positive: true }}
-        />
+        /> */}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">

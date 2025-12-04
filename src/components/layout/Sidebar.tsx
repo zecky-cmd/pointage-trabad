@@ -8,6 +8,7 @@ import {
   Clock,
   FileText,
   LogOut,
+  DatabaseBackup,
   X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -40,17 +41,17 @@ const sidebarItems = [
     roles: ["admin", "rh", "employe"],
   },
   {
-    title: "Justifications",
-    href: "/pointage/justifications",
-    icon: FileText,
-    roles: ["admin", "rh"],
-  },
-  {
     title: "Rapports",
     href: "/pointage/rapport",
     icon: FileText,
     roles: ["admin", "rh", "employe"],
-  }
+  },
+    {
+    title: "Gérer les pointages",
+    href: "/pointage/detail",
+    icon: DatabaseBackup,
+    roles: ["admin", "rh"],
+  },
 ];
 
 export default function Sidebar({ isOpen, onClose, role }: SidebarProps) {
