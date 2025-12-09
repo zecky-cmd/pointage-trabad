@@ -1,0 +1,51 @@
+
+
+Ordinateur
+---------
+
+-id
+-caractéristique
+-libelle 
+-image
+-password
+-prix
+-date_assignation 
+-id_employe 
+
+pour gerer les ordinateur de l'entreprise j'aimerrais ajouter une table ordinateur avec les champs pour la gestion des ordinateur comme ça on saurra quel ordinateur est assigné à quel employé
+marque et autre pourrais etre dans un champs caractéristique 
+
+Champs recommandés
+Champ	Type	Description
+id_ordinateur	UUID / Serial	Identifiant unique
+code_inventaire	VARCHAR	Code interne d’identification (ex : PC-TRB-001)
+marque	VARCHAR	Marque de l’ordinateur (Lenovo, HP, Dell…)
+modele	VARCHAR	Modèle du PC
+numero_serie	VARCHAR	Numéro de série du constructeur
+type	VARCHAR	Type d’appareil : Ordinateur fixe, Laptop, Mini PC
+date_acquisition	DATE	Date d’achat
+etat	VARCHAR	État actuel : neuf, bon, moyen, en panne
+os	VARCHAR	Système d’exploitation installé
+affecte_a	UUID (FK → employe.id_employe)	Employé à qui le PC est affecté
+date_affectation	DATE	Date d’attribution
+date_restitution	DATE	Si l’employé rend l’ordinateur
+commentaire	TEXT	Notes diverses
+
+----------------------------------------------------------------------------
+
+Ordinateur
+----------
+id_ordinateur
+code_inventaire
+marque
+modele
+numero_serie
+type
+date_acquisition
+etat
+os	
+affecte_a	UUID (FK → employe.id_employe)
+password
+date_affectation
+date_restitution
+commentaire	TEXT

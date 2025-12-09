@@ -9,6 +9,7 @@ import {
   FileText,
   LogOut,
   DatabaseBackup,
+  Monitor,
   X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -46,10 +47,16 @@ const sidebarItems = [
     icon: FileText,
     roles: ["admin", "rh", "employe"],
   },
-    {
+  {
     title: "Gérer les pointages",
     href: "/pointage/detail",
     icon: DatabaseBackup,
+    roles: ["admin", "rh"],
+  },
+  {
+    title: "Ordinateurs",
+    href: "/ordinateurs",
+    icon: Monitor,
     roles: ["admin", "rh"],
   },
 ];
