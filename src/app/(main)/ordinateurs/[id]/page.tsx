@@ -13,7 +13,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Ordinateur } from "@/types/ordinateur";
+import { Ordinateur, OrdinateurEtat, OrdinateurType } from "@/types/ordinateur";
 import { ArrowLeft, Save, Monitor, Cpu, HardDrive } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -29,13 +29,17 @@ export default function EditOrdinateurPage({
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [ordinateur, setOrdinateur] = useState<Ordinateur | null>(null);
-  const [employes, setEmployes] = useState<any[]>([]);
+  const [employes, setEmployes] = useState<
+    { id_employe: number; nom_employe: string; prenom_employe: string }[]
+  >([]);
+  const [selectedType, setSelectedType] = useState("Portable");
 
   useEffect(() => {
     async function loadData() {
       try {
         const data = await getOrdinateurById(params.id);
         setOrdinateur(data);
+        if (data && data.type) setSelectedType(data.type); // Set initial type
 
         const supabase = createClient();
         const { data: employesData } = await supabase
@@ -52,30 +56,32 @@ export default function EditOrdinateurPage({
   async function handleSubmit(formData: FormData) {
     setLoading(true);
     try {
-      const data: any = {
-        code_inventaire: formData.get("code_inventaire"),
-        marque: formData.get("marque"),
-        modele: formData.get("modele"),
-        numero_serie: formData.get("numero_serie"),
-        type: formData.get("type"),
-        etat: formData.get("etat"),
-        os: formData.get("os"),
-        processeur: formData.get("processeur"),
-        ram: formData.get("ram"),
-        disque_dur: formData.get("disque_dur"),
-        image_url: formData.get("image_url"),
-        password: formData.get("password"),
-        commentaire: formData.get("commentaire"),
-        date_acquisition: formData.get("date_acquisition") || null,
+      const data: Partial<Ordinateur> = {
+        code_inventaire: formData.get("code_inventaire") as string,
+        marque: formData.get("marque") as string,
+        modele: formData.get("modele") as string,
+        numero_serie: formData.get("numero_serie") as string,
+        type: formData.get("type") as OrdinateurType,
+        etat: formData.get("etat") as OrdinateurEtat,
+        os: formData.get("os") as string,
+        processeur: formData.get("processeur") as string,
+        ram: formData.get("ram") as string,
+        disque_dur: formData.get("disque_dur") as string,
+        image_url: formData.get("image_url") as string,
+        password: formData.get("password") as string,
+        commentaire: formData.get("commentaire") as string,
+        date_acquisition: formData.get("date_acquisition")
+          ? (formData.get("date_acquisition") as string)
+          : undefined,
       };
 
       const affecte_a = formData.get("affecte_a");
       if (affecte_a && affecte_a !== "none") {
-        data.affecte_a = affecte_a;
+        data.affecte_a = Number(affecte_a);
         data.date_affectation = new Date().toISOString();
       } else {
         data.affecte_a = null;
-        data.date_affectation = null;
+        data.date_affectation = undefined; // undefined is compatible with optional string
         data.date_restitution = new Date().toISOString();
       }
 
@@ -124,6 +130,29 @@ export default function EditOrdinateurPage({
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="space-y-1.5">
+                <Label htmlFor="type" className="text-xs">
+                  Type *
+                </Label>
+                <Select
+                  name="type"
+                  required
+                  defaultValue={ordinateur.type}
+                  onValueChange={(val) => setSelectedType(val)}
+                >
+                  <SelectTrigger className="bg-[#1a1a27] border-white/10 h-9 text-sm">
+                    <SelectValue placeholder="Type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Portable">Portable</SelectItem>
+                    <SelectItem value="Fixe">Fixe</SelectItem>
+                    <SelectItem value="Tablette">Tablette</SelectItem>
+                    <SelectItem value="Serveur">Serveur</SelectItem>
+                    <SelectItem value="Périphérique">Périphérique</SelectItem>
+                    <SelectItem value="Téléphone">Téléphone</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
                 <Label htmlFor="code_inventaire" className="text-xs">
                   Code Inventaire *
                 </Label>
@@ -149,7 +178,9 @@ export default function EditOrdinateurPage({
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="modele" className="text-xs">
-                  Modèle *
+                  {selectedType === "Téléphone"
+                    ? "Nom du téléphone *"
+                    : "Modèle *"}
                 </Label>
                 <Input
                   id="modele"
@@ -161,7 +192,9 @@ export default function EditOrdinateurPage({
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="numero_serie" className="text-xs">
-                  N° Série *
+                  {selectedType === "Téléphone"
+                    ? "IMEI / N° Série *"
+                    : "N° Série *"}
                 </Label>
                 <Input
                   id="numero_serie"
@@ -171,26 +204,10 @@ export default function EditOrdinateurPage({
                   className="bg-[#1a1a27] border-white/10 h-9 text-sm focus-visible:ring-blue-500/50"
                 />
               </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="type" className="text-xs">
-                  Type *
-                </Label>
-                <Select name="type" required defaultValue={ordinateur.type}>
-                  <SelectTrigger className="bg-[#1a1a27] border-white/10 h-9 text-sm">
-                    <SelectValue placeholder="Type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Portable">Portable</SelectItem>
-                    <SelectItem value="Fixe">Fixe</SelectItem>
-                    <SelectItem value="Tablette">Tablette</SelectItem>
-                    <SelectItem value="Serveur">Serveur</SelectItem>
-                    <SelectItem value="Périphérique">Périphérique</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+
               <div className="space-y-1.5">
                 <Label htmlFor="date_acquisition" className="text-xs">
-                  Date d'acquisition
+                  Date d&apos;acquisition
                 </Label>
                 <Input
                   type="date"
@@ -216,18 +233,20 @@ export default function EditOrdinateurPage({
               Spécifications
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <div className="space-y-1.5">
-                <Label htmlFor="processeur" className="text-xs">
-                  Processeur
-                </Label>
-                <Input
-                  id="processeur"
-                  name="processeur"
-                  defaultValue={ordinateur.processeur}
-                  placeholder="ex: i7-1185G7"
-                  className="bg-[#1a1a27] border-white/10 h-9 text-sm focus-visible:ring-purple-500/50"
-                />
-              </div>
+              {selectedType !== "Téléphone" && (
+                <div className="space-y-1.5">
+                  <Label htmlFor="processeur" className="text-xs">
+                    Processeur
+                  </Label>
+                  <Input
+                    id="processeur"
+                    name="processeur"
+                    defaultValue={ordinateur.processeur}
+                    placeholder="ex: i7-1185G7"
+                    className="bg-[#1a1a27] border-white/10 h-9 text-sm focus-visible:ring-purple-500/50"
+                  />
+                </div>
+              )}
               <div className="space-y-1.5">
                 <Label htmlFor="ram" className="text-xs">
                   RAM
@@ -242,13 +261,17 @@ export default function EditOrdinateurPage({
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="disque_dur" className="text-xs">
-                  Disque Dur
+                  {selectedType === "Téléphone" ? "Stockage" : "Disque Dur"}
                 </Label>
                 <Input
                   id="disque_dur"
                   name="disque_dur"
                   defaultValue={ordinateur.disque_dur}
-                  placeholder="ex: 512 Go SSD"
+                  placeholder={
+                    selectedType === "Téléphone"
+                      ? "ex: 128 Go"
+                      : "ex: 512 Go SSD"
+                  }
                   className="bg-[#1a1a27] border-white/10 h-9 text-sm focus-visible:ring-purple-500/50"
                 />
               </div>
@@ -330,7 +353,7 @@ export default function EditOrdinateurPage({
 
               <div className="space-y-1.5">
                 <Label htmlFor="password" className="text-xs">
-                  Mdp Admin
+                  Mdp Admin / PIN
                 </Label>
                 <Input
                   id="password"
@@ -360,7 +383,7 @@ export default function EditOrdinateurPage({
               <Button
                 type="button"
                 variant="outline"
-                className="border-white/10 h-9 text-sm hover:bg-white/5"
+                className="border-white/10 h-9 bg-red-600 hover:bg-red/5 text-sm"
               >
                 Annuler
               </Button>

@@ -1,6 +1,7 @@
 "use client";
 
-import { getOrdinateurById } from "@/app/actions/ordinateurs";
+import { createClient } from "@/utils/supabase/client";
+import { getHistorique, getOrdinateurById } from "@/app/actions/ordinateurs";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -14,14 +15,25 @@ import {
   Shield,
   HardDrive,
   Hash,
+  History,
+  Printer,
 } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "react-toastify";
-import { Ordinateur } from "@/types/ordinateur";
+import { Ordinateur, EquipementHistorique } from "@/types/ordinateur";
+import { ContractPrint } from "@/components/ordinateurs/ContractPrint";
+import { useReactToPrint } from "react-to-print";
 
 // Helper components for display
-const DetailRow = ({ icon: Icon, label, value, className }: any) => (
+interface DetailRowProps {
+  icon: React.ElementType;
+  label: string;
+  value?: string | number | null;
+  className?: string;
+}
+
+const DetailRow = ({ icon: Icon, label, value, className }: DetailRowProps) => (
   <div
     className={`flex items-start gap-3 p-3 rounded-lg bg-[#1a1a27] border border-white/5 ${className}`}
   >
@@ -45,14 +57,38 @@ export default function ComputerDetailsPage({
   params: { id: string };
 }) {
   const [ordinateur, setOrdinateur] = useState<Ordinateur | null>(null);
+  const [historique, setHistorique] = useState<EquipementHistorique[]>([]);
   const [loading, setLoading] = useState(true);
+  const [adminName, setAdminName] = useState<string>("");
+
+  const componentRef = useRef<HTMLDivElement>(null);
+
+  const handlePrint = useReactToPrint({
+    contentRef: componentRef,
+    documentTitle: `Contrat_${ordinateur?.code_inventaire || "Materiel"}`,
+  });
 
   useEffect(() => {
     async function loadData() {
       try {
-        const data = await getOrdinateurById(params.id);
+        const supabase = createClient();
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+
+        if (user) {
+          console.log("user", user);
+          const name = user.user_metadata?.full_name || "";
+          setAdminName(name);
+        }
+
+        const [data, historyData] = await Promise.all([
+          getOrdinateurById(params.id),
+          getHistorique(params.id),
+        ]);
         setOrdinateur(data);
-      } catch (error) {
+        setHistorique(historyData || []);
+      } catch {
         toast.error("Erreur lors du chargement des détails");
       } finally {
         setLoading(false);
@@ -87,6 +123,16 @@ export default function ComputerDetailsPage({
 
   return (
     <div className="space-y-6 max-w-5xl mx-auto">
+      {/* Hidden Contract Component for Printing */}
+      <div style={{ display: "none" }}>
+        <ContractPrint
+          ref={componentRef}
+          ordinateur={ordinateur}
+          date={new Date().toLocaleDateString()}
+          adminName={adminName}
+        />
+      </div>
+
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
@@ -111,12 +157,23 @@ export default function ComputerDetailsPage({
             </p>
           </div>
         </div>
-        <Link href={`/ordinateurs/${ordinateur.id_ordinateur}`}>
-          <Button className="bg-blue-600 hover:bg-blue-700 text-white">
-            <Pencil className="w-4 h-4 mr-2" />
-            Modifier
-          </Button>
-        </Link>
+        <div className="flex gap-2">
+          {ordinateur.employe && (
+            <Button
+              onClick={() => handlePrint && handlePrint()}
+              className="bg-black/50 hover:bg-black/75 text-white border border-black/10"
+            >
+              <Printer className="w-4 h-4 mr-2" />
+              Imprimer
+            </Button>
+          )}
+          <Link href={`/ordinateurs/${ordinateur.id_ordinateur}`}>
+            <Button className="bg-blue-600 hover:bg-blue-700 text-white">
+              <Pencil className="w-4 h-4 mr-2" />
+              Modifier
+            </Button>
+          </Link>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -159,6 +216,62 @@ export default function ComputerDetailsPage({
                     : null
                 }
               />
+            </div>
+          </Card>
+
+          {/* History Section */}
+          <Card className="bg-[#1e1e2d] border-white/10 p-6">
+            <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+              <History className="w-5 h-5 text-orange-500" />
+              Historique des Affectations
+            </h2>
+            <div className="space-y-4">
+              {historique.length > 0 ? (
+                historique.map((h) => (
+                  <div
+                    key={h.id}
+                    className="flex items-start gap-4 p-3 bg-[#1a1a27] rounded-lg border border-white/5"
+                  >
+                    <div className="w-8 h-8 rounded-full bg-orange-500/10 flex items-center justify-center text-orange-500 font-bold text-xs ring-1 ring-orange-500/20">
+                      {h.employe?.prenom_employe?.[0] || "?"}
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex justify-between items-start">
+                        <p className="text-sm font-medium text-white">
+                          {h.type_action === "affectation"
+                            ? "Affecté à"
+                            : h.type_action}{" "}
+                          : {h.employe?.prenom_employe} {h.employe?.nom_employe}
+                        </p>
+                        <span className="text-xs text-gray-500">
+                          {new Date(h.date_debut).toLocaleDateString()}
+                        </span>
+                      </div>
+                      {h.date_fin && (
+                        <p className="text-xs text-gray-400 mt-1">
+                          Restitué le{" "}
+                          {new Date(h.date_fin).toLocaleDateString()}
+                        </p>
+                      )}
+                      {h.commentaire && (
+                        <p className="text-xs text-gray-500 italic mt-1">
+                          &quot;{h.commentaire}&quot;
+                        </p>
+                      )}
+                      {h.auteur && (
+                        <p className="text-xs text-gray-400 mt-1">
+                          Par :{" "}
+                          <span className="text-gray-300">{h.auteur}</span>
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <p className="text-sm text-gray-500 italic text-center py-4">
+                  Aucun historique disponible.
+                </p>
+              )}
             </div>
           </Card>
 

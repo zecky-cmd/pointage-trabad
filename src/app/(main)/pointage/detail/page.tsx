@@ -143,7 +143,7 @@ export default function RapportAdminPage() {
                 type="month"
                 value={moisSelectionne}
                 onChange={(e) => setMoisSelectionne(e.target.value)}
-                className="w-full sm:w-48"
+                className="w-full sm:w-48 text-primary"
               />
             </div>
           </CardHeader>
@@ -240,7 +240,7 @@ export default function RapportAdminPage() {
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm">
-                          <Button variant="ghost" size="sm" asChild>
+                          <Button variant="secondary" size="sm" asChild>
                             <Link
                               href={`/pointage/admin/${stat.id_employe}?mois=${moisSelectionne}`}
                               className="flex items-center gap-2"

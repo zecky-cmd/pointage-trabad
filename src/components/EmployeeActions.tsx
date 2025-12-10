@@ -2,8 +2,16 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Eye, Pencil, Power, Trash2 } from "lucide-react";
+import { Copy, Eye, MoreHorizontal, Pencil, Power, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import Link from "next/link";
 
 interface EmployeeActionsProps {
@@ -19,7 +27,6 @@ export default function EmployeeActions({
 }: EmployeeActionsProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
-  // const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
 
   const handleToggleStatut = async () => {
     if (
@@ -83,42 +90,55 @@ export default function EmployeeActions({
   };
 
   return (
-    <div className="flex items-center gap-2">
-      <Button variant="ghost" size="icon" asChild title="Voir">
-        <Link href={`/employes/${employeeId}`}>
-          <Eye className="h-4 w-4 text-blue-600" />
-        </Link>
-      </Button>
-
-      <Button variant="ghost" size="icon" asChild title="Modifier">
-        <Link href={`/employes/${employeeId}/modifier`}>
-          <Pencil className="h-4 w-4 text-green-600" />
-        </Link>
-      </Button>
-
-      <Button
-        variant="ghost"
-        size="icon"
-        onClick={handleToggleStatut}
-        disabled={loading}
-        title={statut === "actif" ? "Désactiver" : "Activer"}
-        className={statut === "actif" ? "text-orange-600" : "text-green-600"}
-      >
-        <Power className="h-4 w-4" />
-      </Button>
-
-      {isAdmin && (
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={handleDelete}
-          disabled={loading}
-          title="Supprimer"
-          className="text-red-600 hover:text-red-900 hover:bg-red-50"
-        >
-          <Trash2 className="h-4 w-4" />
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" className="h-8 w-8 p-0">
+          <span className="sr-only">Ouvrir le menu</span>
+          <MoreHorizontal className="h-4 w-4" />
         </Button>
-      )}
-    </div>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuLabel>Actions</DropdownMenuLabel>
+        <DropdownMenuItem asChild>
+          <Link
+            href={`/employes/${employeeId}`}
+            className="flex items-center cursor-pointer"
+          >
+            <Eye className="mr-2 h-4 w-4" />
+            Voir détails
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <Link
+            href={`/employes/${employeeId}/modifier`}
+            className="flex items-center cursor-pointer"
+          >
+            <Pencil className="mr-2 h-4 w-4" />
+            Modifier
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          onClick={handleToggleStatut}
+          disabled={loading}
+          className="flex items-center cursor-pointer"
+        >
+          <Power className="mr-2 h-4 w-4" />
+          {statut === "actif" ? "Désactiver" : "Activer"}
+        </DropdownMenuItem>
+        {isAdmin && (
+          <>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              onClick={handleDelete}
+              disabled={loading}
+              className="flex items-center text-red-600 focus:text-red-600 cursor-pointer"
+            >
+              <Trash2 className="mr-2 h-4 w-4" />
+              Supprimer
+            </DropdownMenuItem>
+          </>
+        )}
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }

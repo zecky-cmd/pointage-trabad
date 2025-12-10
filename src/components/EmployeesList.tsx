@@ -7,6 +7,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Search, Plus } from "lucide-react";
 import Link from "next/link";
 import EmployeeActions from "@/components/EmployeeActions";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export interface Profil {
   id_employe: number;
@@ -37,30 +44,54 @@ export default function EmployeesList({
   userRole,
 }: EmployeesListProps) {
   const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState<
+    "tous" | "actif" | "inactif"
+  >("tous");
 
   const filteredEmployees = employees.filter((employee) => {
     const searchLower = searchTerm.toLowerCase();
-    return (
+    const matchesSearch =
       employee.nom_employe.toLowerCase().includes(searchLower) ||
       employee.prenom_employe.toLowerCase().includes(searchLower) ||
       employee.email_employe.toLowerCase().includes(searchLower) ||
       (employee.departement_employe &&
-        employee.departement_employe.toLowerCase().includes(searchLower))
-    );
+        employee.departement_employe.toLowerCase().includes(searchLower));
+
+    const matchesStatus =
+      statusFilter === "tous" || employee.statut_employe === statusFilter;
+
+    return matchesSearch && matchesStatus;
   });
 
   return (
     <div className="space-y-6">
       {/* Header & Actions */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div className="relative w-full sm:w-96">
-          <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Rechercher un employé..."
-            className="pl-8"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
+        <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto flex-1">
+          <div className="relative w-full sm:w-96">
+            <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Rechercher un employé..."
+              className="pl-8"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+          <Select
+            value={statusFilter}
+            onValueChange={(value: "tous" | "actif" | "inactif") =>
+              setStatusFilter(value)
+            }
+          >
+            <SelectTrigger className="w-full sm:w-[180px]">
+              <SelectValue placeholder="Filtrer par statut" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="tous">Tous les statuts</SelectItem>
+              <SelectItem value="actif">Actif</SelectItem>
+              <SelectItem value="inactif">Inactif</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
         <Button asChild className="w-full sm:w-auto">
           <Link href="/employes/nouveau">
@@ -75,25 +106,25 @@ export default function EmployeesList({
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Nom Complet
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Email
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Poste
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Département
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Rôle
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Statut
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Actions
               </th>
             </tr>
@@ -104,27 +135,27 @@ export default function EmployeesList({
                 key={employe.id_employe}
                 className="hover:bg-gray-50 transition-colors"
               >
-                <td className="px-6 py-4 whitespace-nowrap">
+                <td className="px-3 py-2 whitespace-nowrap">
                   <div className="text-sm font-medium text-gray-900">
                     {employe.prenom_employe} {employe.nom_employe}
                   </div>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap">
+                <td className="px-3 py-2 whitespace-nowrap">
                   <div className="text-sm text-gray-500">
                     {employe.email_employe}
                   </div>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap">
+                <td className="px-3 py-2 whitespace-nowrap">
                   <div className="text-sm text-gray-500">
                     {employe.post_employe || "-"}
                   </div>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap">
+                <td className="px-3 py-2 whitespace-nowrap">
                   <div className="text-sm text-gray-500">
                     {employe.departement_employe || "-"}
                   </div>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap">
+                <td className="px-3 py-2 whitespace-nowrap">
                   {employe.profil ? (
                     <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800 capitalize">
                       {employe.profil.role}
@@ -135,7 +166,7 @@ export default function EmployeesList({
                     </span>
                   )}
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap">
+                <td className="px-3 py-2 whitespace-nowrap">
                   <span
                     className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
                       employe.statut_employe === "actif"
@@ -146,7 +177,7 @@ export default function EmployeesList({
                     {employe.statut_employe}
                   </span>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm">
+                <td className="px-3 py-2 whitespace-nowrap text-sm">
                   <EmployeeActions
                     employeeId={employe.id_employe}
                     statut={employe.statut_employe}

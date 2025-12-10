@@ -119,3 +119,8 @@ III. Validation
 ---------------------------------------------------------------------------------
 ---------------------------------------------------------------------------------
 Conclusion 
+
+---------------------------------------------------------------
+en fait pout le parc informatique, on doit gerer les téléphones aussi.
+en plus faudra ajouter une fonctionnnalité a imprimer presentant les informations de l'appareil, le nom de la personne a qui on affecte l'appareil, le nom de la personne qui affecte l'appareil, les deux devrons signer le contrat.
+aussi on devra connaitre l'utilisateur precedent de l'appareil.

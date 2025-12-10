@@ -296,19 +296,19 @@ export default function DetailEmployePage({
 
             <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
               <div className="flex items-center gap-2 w-full sm:w-auto">
-                <Calendar className="h-4 w-4 text-muted-foreground" />
+                {/* <Calendar className="h-4 w-4 text-muted-foreground" /> */}
                 <Input
                   type="month"
                   value={moisSelectionne}
                   onChange={(e) => setMoisSelectionne(e.target.value)}
-                  className="w-full sm:w-40"
+                  className="w-full sm:w-40 text-primary"
                 />
               </div>
               <div className="flex items-center gap-2 w-full sm:w-auto">
                 <Button
                   onClick={exportPDF}
-                  variant="outline"
-                  className="flex-1 sm:flex-none gap-2"
+                  variant="outline" 
+                  className="flex-1 text-primary sm:flex-none gap-2"
                 >
                   <FileText className="h-4 w-4 text-red-600" />
                   PDF
@@ -316,7 +316,7 @@ export default function DetailEmployePage({
                 <Button
                   onClick={exportExcel}
                   variant="outline"
-                  className="flex-1 sm:flex-none gap-2"
+                  className="flex-1 text-primary sm:flex-none gap-2"
                 >
                   <Download className="h-4 w-4 text-green-600" />
                   Excel

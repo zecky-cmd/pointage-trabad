@@ -8,7 +8,26 @@ export type OrdinateurType =
   | "Fixe"
   | "Tablette"
   | "Serveur"
-  | "Périphérique";
+  | "Périphérique"
+  | "Téléphone";
+
+export interface EquipementHistorique {
+  id: number;
+  id_ordinateur: string;
+  id_employe: number | null;
+  date_debut: string;
+  date_fin: string | null;
+  type_action: string;
+  commentaire: string | null;
+  created_at: string;
+  cree_par?: string | null;
+  auteur?: string | null;
+  employe?: {
+    nom_employe: string;
+    prenom_employe: string;
+    email_employe?: string;
+  };
+}
 
 export interface Ordinateur {
   id_ordinateur: string;
@@ -23,7 +42,7 @@ export interface Ordinateur {
   processeur?: string;
   ram?: string;
   disque_dur?: string;
-  affecte_a?: number | null; // Changed to number
+  affecte_a?: number | null;
   image_url?: string;
   password?: string;
   date_affectation?: string;
@@ -33,8 +52,8 @@ export interface Ordinateur {
 
   // Joins
   employe?: {
+    id_employe?: number; // Added to match usage in code
     nom_employe: string;
     prenom_employe: string;
-    // image_url might not exist on employe table based on my search
   };
 }

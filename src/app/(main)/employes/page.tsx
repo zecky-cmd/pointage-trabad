@@ -1,6 +1,5 @@
 import { createClient } from "@/utils/supabase/server";
 import { redirect } from "next/navigation";
-import Link from "next/link";
 import EmployeesList, { Employee } from "@/components/EmployeesList";
 
 export default async function EmployesPage() {

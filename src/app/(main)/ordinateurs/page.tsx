@@ -33,6 +33,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { Ordinateur, OrdinateurEtat } from "@/types/ordinateur";
+import { DeleteOrdinateurItem } from "@/components/ordinateurs/DeleteOrdinateurItem";
 
 export default async function OrdinateursPage() {
   const ordinateurs = await getOrdinateurs();
@@ -277,10 +278,7 @@ export default async function OrdinateursPage() {
                           Modifier
                         </Link>
                       </DropdownMenuItem>
-                      <DropdownMenuItem className="hover:bg-red-500/20 text-red-500 cursor-pointer text-xs">
-                        <Trash className="w-3 h-3 mr-2" />
-                        Supprimer
-                      </DropdownMenuItem>
+                      <DeleteOrdinateurItem id={ordinateur.id_ordinateur} />
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </TableCell>
@@ -293,7 +291,7 @@ export default async function OrdinateursPage() {
   );
 }
 
-function Users(props: any) {
+function Users(props: React.SVGProps<SVGSVGElement>) {
   return (
     <svg
       {...props}
