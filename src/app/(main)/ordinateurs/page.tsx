@@ -107,7 +107,7 @@ export default async function OrdinateursPage() {
               <Monitor className="w-5 h-5 text-blue-500" />
             </div>
             <div>
-              <p className="text-xl font-bold">{total}</p>
+              <p className="text-xl text-white font-bold">{total}</p>
               <p className="text-xs text-gray-400">Total</p>
             </div>
           </div>
@@ -118,7 +118,7 @@ export default async function OrdinateursPage() {
               <Monitor className="w-5 h-5 text-emerald-500" />
             </div>
             <div>
-              <p className="text-xl font-bold">{disponibles}</p>
+              <p className="text-xl text-white font-bold">{disponibles}</p>
               <p className="text-xs text-gray-400">Disponibles</p>
             </div>
           </div>
@@ -129,7 +129,7 @@ export default async function OrdinateursPage() {
               <Monitor className="w-5 h-5 text-purple-500" />
             </div>
             <div>
-              <p className="text-xl font-bold">{affectes}</p>
+              <p className="text-xl text-white font-bold">{affectes}</p>
               <p className="text-xs text-gray-400">Affectés</p>
             </div>
           </div>
@@ -140,7 +140,7 @@ export default async function OrdinateursPage() {
               <Monitor className="w-5 h-5 text-red-500" />
             </div>
             <div>
-              <p className="text-xl font-bold">{enPanne}</p>
+              <p className="text-xl text-white font-bold">{enPanne}</p>
               <p className="text-xs text-gray-400">En panne</p>
             </div>
           </div>
@@ -151,7 +151,7 @@ export default async function OrdinateursPage() {
               <Monitor className="w-5 h-5 text-amber-500" />
             </div>
             <div>
-              <p className="text-xl font-bold">{enReparation}</p>
+              <p className="text-xl text-white font-bold">{enReparation}</p>
               <p className="text-xs text-gray-400">En réparation</p>
             </div>
           </div>
@@ -165,7 +165,7 @@ export default async function OrdinateursPage() {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <Input
               placeholder="Rechercher par code, marque, modèle..."
-              className="pl-9 bg-[#1a1a27] border-white/10"
+              className="pl-9 bg-[#1a1a27] text-gray-400 border-gray-400"
             />
           </div>
           <div className="flex gap-2">

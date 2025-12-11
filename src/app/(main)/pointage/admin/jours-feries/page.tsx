@@ -2,10 +2,9 @@
 
 import type React from "react";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { useRouter } from "next/navigation";
-import Navigation from "@/components/navigation/Nav";
 
 interface JourFerie {
   id_ferie: number;
@@ -40,11 +39,16 @@ export default function JoursFeriesPage() {
   const router = useRouter();
   const supabase = createClient();
 
-  useEffect(() => {
-    loadData();
-  }, []);
+  const loadJoursFeries = useCallback(async (): Promise<void> => {
+    const { data } = await supabase
+      .from("jours_feries")
+      .select("*")
+      .order("date_ferie", { ascending: true });
 
-  const loadData = async (): Promise<void> => {
+    setJoursFeries((data as JourFerie[]) || []);
+  }, [supabase]);
+
+  const loadData = useCallback(async (): Promise<void> => {
     try {
       const {
         data: { user },
@@ -72,16 +76,7 @@ export default function JoursFeriesPage() {
     } finally {
       setLoading(false);
     }
-  };
-
-  const loadJoursFeries = async (): Promise<void> => {
-    const { data } = await supabase
-      .from("jours_feries")
-      .select("*")
-      .order("date_ferie", { ascending: true });
-
-    setJoursFeries((data as JourFerie[]) || []);
-  };
+  }, [supabase, router, loadJoursFeries]);
 
   const openModal = (jourFerie?: JourFerie): void => {
     if (jourFerie) {
@@ -135,6 +130,10 @@ export default function JoursFeriesPage() {
       alert(`Erreur: ${supabaseError.message}`);
     }
   };
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   const handleDelete = async (id: number): Promise<void> => {
     if (!confirm("Voulez-vous vraiment supprimer ce jour férié ?")) return;

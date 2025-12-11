@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -11,7 +11,7 @@ import type {
   ServerTimeData,
   ProfilUtilisateur,
 } from "@/types/pointage_btn";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { AlertTriangle, Clock, Calendar } from "lucide-react";
 import { useGeolocation } from "@/hooks/useGeolocation";
@@ -19,7 +19,7 @@ import { isWithinRadius } from "@/utils/geolocation";
 
 export default function PointagePage() {
   const [loading, setLoading] = useState(true);
-  const [user, setUser] = useState<User | null>(null);
+
   const [employeId, setEmployeId] = useState<number | null>(null);
   const [serverTime, setServerTime] = useState<string>("");
   const [serverDate, setServerDate] = useState<string>("");
@@ -28,14 +28,45 @@ export default function PointagePage() {
   const router = useRouter();
   const supabase = createClient();
 
-  useEffect(() => {
-    loadData();
-    // Rafraîchir l'heure toutes les secondes
-    const interval = setInterval(updateServerTime, 1000);
-    return () => clearInterval(interval);
-  }, []);
+  const updateServerTime = useCallback(async () => {
+    const { data } = await supabase.rpc("get_server_time");
+    if (data && Array.isArray(data) && data.length > 0) {
+      const timeData = data[0] as ServerTimeData;
+      setServerTime(timeData.server_time);
+      setServerDate(timeData.server_date);
+    }
+  }, [supabase]);
 
-  const loadData = async () => {
+  const loadPointageJour = useCallback(
+    async (empId: number) => {
+      const { data: serverData } = await supabase.rpc("get_server_time");
+      if (
+        !serverData ||
+        !Array.isArray(serverData) ||
+        serverData.length === 0
+      ) {
+        console.error("Erreur: impossible de récupérer la date serveur");
+        return;
+      }
+
+      const timeData = serverData[0] as ServerTimeData;
+      const dateJour = timeData.server_date;
+
+      const { data } = await supabase
+        .from("pointage")
+        .select("*")
+        .eq("id_employe", empId)
+        .eq("date_pointage", dateJour)
+        .single();
+
+      if (data) {
+        setPointageJour(data as Pointage);
+      }
+    },
+    [supabase]
+  );
+
+  const loadData = useCallback(async () => {
     try {
       // Récupérer l'utilisateur
       const {
@@ -45,7 +76,6 @@ export default function PointagePage() {
         router.push("/login");
         return;
       }
-      setUser(currentUser);
 
       // Récupérer l'ID employé
       const { data: profil } = await supabase
@@ -70,38 +100,13 @@ export default function PointagePage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [supabase, router, updateServerTime, loadPointageJour]);
 
-  const updateServerTime = async () => {
-    const { data } = await supabase.rpc("get_server_time");
-    if (data && Array.isArray(data) && data.length > 0) {
-      const timeData = data[0] as ServerTimeData;
-      setServerTime(timeData.server_time);
-      setServerDate(timeData.server_date);
-    }
-  };
-
-  const loadPointageJour = async (empId: number) => {
-    const { data: serverData } = await supabase.rpc("get_server_time");
-    if (!serverData || !Array.isArray(serverData) || serverData.length === 0) {
-      console.error("Erreur: impossible de récupérer la date serveur");
-      return;
-    }
-
-    const timeData = serverData[0] as ServerTimeData;
-    const dateJour = timeData.server_date;
-
-    const { data } = await supabase
-      .from("pointage")
-      .select("*")
-      .eq("id_employe", empId)
-      .eq("date_pointage", dateJour)
-      .single();
-
-    if (data) {
-      setPointageJour(data as Pointage);
-    }
-  };
+  useEffect(() => {
+    loadData();
+    const interval = setInterval(updateServerTime, 1000);
+    return () => clearInterval(interval);
+  }, [loadData, updateServerTime]);
 
   const {
     latitude,

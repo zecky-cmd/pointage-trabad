@@ -19,7 +19,7 @@ import {
   Printer,
 } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, use } from "react";
 import { toast } from "react-toastify";
 import { Ordinateur, EquipementHistorique } from "@/types/ordinateur";
 import { ContractPrint } from "@/components/ordinateurs/ContractPrint";
@@ -56,6 +56,7 @@ export default function ComputerDetailsPage({
 }: {
   params: { id: string };
 }) {
+  const { id } = params;
   const [ordinateur, setOrdinateur] = useState<Ordinateur | null>(null);
   const [historique, setHistorique] = useState<EquipementHistorique[]>([]);
   const [loading, setLoading] = useState(true);
@@ -83,8 +84,8 @@ export default function ComputerDetailsPage({
         }
 
         const [data, historyData] = await Promise.all([
-          getOrdinateurById(params.id),
-          getHistorique(params.id),
+          getOrdinateurById(id),
+          getHistorique(id),
         ]);
         setOrdinateur(data);
         setHistorique(historyData || []);
@@ -95,7 +96,7 @@ export default function ComputerDetailsPage({
       }
     }
     loadData();
-  }, [params.id]);
+  }, [id]);
 
   if (loading)
     return (
@@ -179,7 +180,7 @@ export default function ComputerDetailsPage({
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Main Info Column */}
         <div className="lg:col-span-2 space-y-6">
-          <Card className="bg-[#1e1e2d] border-white/10 p-6">
+          <Card className="bg-[#1e1e2d] text-white/80 border-white/10 p-6">
             <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
               <Monitor className="w-5 h-5 text-blue-500" />
               Informations Matériel
@@ -221,7 +222,7 @@ export default function ComputerDetailsPage({
 
           {/* History Section */}
           <Card className="bg-[#1e1e2d] border-white/10 p-6">
-            <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+            <h2 className="text-lg text-white/80 font-semibold mb-4 flex items-center gap-2">
               <History className="w-5 h-5 text-orange-500" />
               Historique des Affectations
             </h2>
@@ -275,7 +276,7 @@ export default function ComputerDetailsPage({
             </div>
           </Card>
 
-          <Card className="bg-[#1e1e2d] border-white/10 p-6">
+          <Card className="bg-[#1e1e2d] text-white/80 border-white/10 p-6">
             <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
               <FileText className="w-5 h-5 text-purple-500" />
               Notes & Commentaires
@@ -306,7 +307,7 @@ export default function ComputerDetailsPage({
           </Card>
 
           {/* Assignment Card */}
-          <Card className="bg-[#1e1e2d] border-white/10 p-6">
+          <Card className="bg-[#1e1e2d] text-white/80 border-white/10 p-6">
             <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
               <User className="w-5 h-5 text-emerald-500" />
               Affectation

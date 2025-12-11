@@ -1,9 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { useRouter } from "next/navigation";
-import Navigation from "@/components/navigation/Nav";
 import type {
   PointageWithEmployee,
   JustificationType,
@@ -25,44 +24,7 @@ export default function JustificationsPage() {
   const router = useRouter();
   const supabase = createClient();
 
-  useEffect(() => {
-    loadData();
-  }, []);
-
-  useEffect(() => {
-    loadJustifications();
-  }, [filter, typeFilter]);
-
-  const loadData = async () => {
-    try {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) {
-        router.push("/login");
-        return;
-      }
-
-      const { data: profil } = await supabase
-        .from("profil_utilisateur")
-        .select("role")
-        .eq("id_profil", user.id)
-        .single();
-
-      if (!profil || !["admin", "rh"].includes(profil.role)) {
-        router.push("/dashboard");
-        return;
-      }
-
-      await loadJustifications();
-    } catch (error) {
-      console.error("Erreur:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const loadJustifications = async () => {
+  const loadJustifications = useCallback(async () => {
     let query = supabase
       .from("pointage")
       .select(
@@ -101,7 +63,44 @@ export default function JustificationsPage() {
     }
 
     setJustifications(filtered);
-  };
+  }, [filter, typeFilter, supabase]);
+
+  const loadData = useCallback(async () => {
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) {
+        router.push("/login");
+        return;
+      }
+
+      const { data: profil } = await supabase
+        .from("profil_utilisateur")
+        .select("role")
+        .eq("id_profil", user.id)
+        .single();
+
+      if (!profil || !["admin", "rh"].includes(profil.role)) {
+        router.push("/dashboard");
+        return;
+      }
+
+      await loadJustifications();
+      setLoading(false);
+    } catch (error) {
+      console.error("Erreur:", error);
+      setLoading(false);
+    }
+  }, [supabase, router, loadJustifications]);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
+
+  useEffect(() => {
+    loadJustifications();
+  }, [loadJustifications]);
 
   const handleTraiter = async (
     id_pointage: number,

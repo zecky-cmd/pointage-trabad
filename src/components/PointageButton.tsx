@@ -2,7 +2,7 @@
 
 import type { Pointage } from "@/types/pointage_btn";
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
+
 import { Card } from "@/components/ui/card";
 
 interface PointageButtonProps {

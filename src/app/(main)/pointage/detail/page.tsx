@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -12,7 +12,7 @@ import {
   CardTitle,
   CardDescription,
 } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -50,22 +50,7 @@ export default function RapportAdminPage() {
   const router = useRouter();
   const supabase = createClient();
 
-  useEffect(() => {
-    const now = new Date();
-    const moisActuel = `${now.getFullYear()}-${String(
-      now.getMonth() + 1
-    ).padStart(2, "0")}`;
-    setMoisSelectionne(moisActuel);
-    loadData();
-  }, []);
-
-  useEffect(() => {
-    if (moisSelectionne) {
-      loadStats();
-    }
-  }, [moisSelectionne]);
-
-  const loadData = async (): Promise<void> => {
+  const loadData = useCallback(async (): Promise<void> => {
     try {
       const {
         data: { user },
@@ -93,9 +78,9 @@ export default function RapportAdminPage() {
       console.error("Erreur:", error);
       router.push("/dashboard");
     }
-  };
+  }, [supabase, router]);
 
-  const loadStats = async (): Promise<void> => {
+  const loadStats = useCallback(async (): Promise<void> => {
     const [annee, mois] = moisSelectionne.split("-");
 
     const { data: stats } = await supabase
@@ -106,7 +91,23 @@ export default function RapportAdminPage() {
       .order("nom_employe");
 
     setEmployeStats((stats as EmployeStat[]) || []);
-  };
+  }, [moisSelectionne, supabase]);
+
+  useEffect(() => {
+    // Définir le mois actuel par défaut
+    const now = new Date();
+    const moisActuel = `${now.getFullYear()}-${String(
+      now.getMonth() + 1
+    ).padStart(2, "0")}`;
+    setMoisSelectionne(moisActuel);
+    loadData();
+  }, [loadData]);
+
+  useEffect(() => {
+    if (moisSelectionne) {
+      loadStats();
+    }
+  }, [moisSelectionne, loadStats]);
 
   const formatDuree = (heures: number): string => {
     const h = Math.floor(heures);

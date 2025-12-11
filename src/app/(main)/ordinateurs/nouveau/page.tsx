@@ -96,7 +96,7 @@ export default function NouveauOrdinateurPage() {
                   defaultValue="Portable"
                   onValueChange={(val) => setSelectedType(val)}
                 >
-                  <SelectTrigger className="bg-[#1a1a27] border-white/10 h-9 text-sm">
+                  <SelectTrigger className="bg-[#1a1a27] text-white/80 border-white/10 h-9 text-sm">
                     <SelectValue placeholder="Type" />
                   </SelectTrigger>
                   <SelectContent>
@@ -255,7 +255,7 @@ export default function NouveauOrdinateurPage() {
                   État *
                 </Label>
                 <Select name="etat" required defaultValue="Fonctionnel">
-                  <SelectTrigger className="bg-[#1a1a27] border-white/10 h-9 text-sm">
+                  <SelectTrigger className="bg-[#1a1a27] text-white/80 border-white/10 h-9 text-sm">
                     <SelectValue placeholder="État" />
                   </SelectTrigger>
                   <SelectContent>

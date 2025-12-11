@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { useRouter } from "next/navigation";
 import JustificationModal from "@/components/JustificationModal";
-import Navigation from "@/components/navigation/Nav";
+
 import type { Employee, Pointage, StatsData } from "@/types/pointage";
 
 interface StatCardProps {
@@ -32,22 +32,85 @@ export default function RapportMensuelPage() {
   const router = useRouter();
   const supabase = createClient();
 
-  useEffect(() => {
-    const now = new Date();
-    const moisActuel = `${now.getFullYear()}-${String(
-      now.getMonth() + 1
-    ).padStart(2, "0")}`;
-    setMoisSelectionne(moisActuel);
-    loadData();
+  const formatDuree = useCallback((heures: number): string => {
+    const h = Math.floor(heures);
+    const m = Math.round((heures - h) * 60);
+    return `${h}h${String(m).padStart(2, "0")}`;
   }, []);
 
-  useEffect(() => {
-    if (moisSelectionne && employe) {
-      loadPointagesMois();
-    }
-  }, [moisSelectionne, employe]);
+  const calculerHeuresTravaillees = useCallback(
+    (pointage: Pointage): number => {
+      if (!pointage.pointage_arrive || !pointage.pointage_depart) return 0;
 
-  const loadData = async () => {
+      const arrive = new Date(`2000-01-01T${pointage.pointage_arrive}`);
+      const depart = new Date(`2000-01-01T${pointage.pointage_depart}`);
+      let heures = (depart.getTime() - arrive.getTime()) / (1000 * 60 * 60);
+
+      if (pointage.pointage_pause && pointage.pointage_reprise) {
+        const pause = new Date(`2000-01-01T${pointage.pointage_pause}`);
+        const reprise = new Date(`2000-01-01T${pointage.pointage_reprise}`);
+        const dureePause =
+          (reprise.getTime() - pause.getTime()) / (1000 * 60 * 60);
+        heures -= dureePause;
+      } else {
+        heures -= 1;
+      }
+
+      return Math.max(0, heures);
+    },
+    []
+  );
+
+  const calculerStats = useCallback(
+    (pointagesData: Pointage[]) => {
+      let totalHeures = 0;
+      let totalRetard = 0;
+      let joursPresent = 0;
+      let joursAbsent = 0;
+      let absencesJustifiees = 0;
+      let retardsSignificatifs = 0;
+
+      pointagesData.forEach((p) => {
+        if (p.statut === "present") {
+          joursPresent++;
+          const heures = calculerHeuresTravaillees(p);
+          totalHeures += heures;
+        }
+        if (p.statut === "absent") {
+          joursAbsent++;
+          if (p.statut_justification_absence === "justifiee") {
+            absencesJustifiees++;
+          }
+        }
+        if (p.retard_minutes > 0) {
+          totalRetard += p.retard_minutes;
+          if (p.retard_minutes > 15) {
+            retardsSignificatifs++;
+          }
+        }
+      });
+
+      const heuresTheoriques = (joursPresent + absencesJustifiees) * 8;
+      const heuresAbsencesNonJustifiees =
+        (joursAbsent - absencesJustifiees) * 8;
+      const heuresPayables = heuresTheoriques;
+
+      const newStats: StatsData = {
+        totalHeures: formatDuree(totalHeures),
+        joursPresent,
+        joursAbsent,
+        absencesJustifiees,
+        totalRetard: formatDuree(totalRetard / 60),
+        retardsSignificatifs,
+        heuresPayables: formatDuree(heuresPayables),
+        heuresAbsencesNonJustifiees: formatDuree(heuresAbsencesNonJustifiees),
+      };
+      setStats(newStats);
+    },
+    [calculerHeuresTravaillees, formatDuree]
+  );
+
+  const loadData = useCallback(async () => {
     try {
       const {
         data: { user },
@@ -82,9 +145,9 @@ export default function RapportMensuelPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [supabase, router]);
 
-  const loadPointagesMois = async () => {
+  const loadPointagesMois = useCallback(async () => {
     if (!employe) return;
 
     const [annee, mois] = moisSelectionne.split("-");
@@ -107,78 +170,22 @@ export default function RapportMensuelPage() {
     const typedData = (data as Pointage[]) || [];
     setPointages(typedData);
     calculerStats(typedData);
-  };
+  }, [employe, moisSelectionne, supabase, calculerStats]);
 
-  const calculerStats = (pointagesData: Pointage[]) => {
-    let totalHeures = 0;
-    let totalRetard = 0;
-    let joursPresent = 0;
-    let joursAbsent = 0;
-    let absencesJustifiees = 0;
-    let retardsSignificatifs = 0;
+  useEffect(() => {
+    const now = new Date();
+    const moisActuel = `${now.getFullYear()}-${String(
+      now.getMonth() + 1
+    ).padStart(2, "0")}`;
+    setMoisSelectionne(moisActuel);
+    loadData();
+  }, [loadData]);
 
-    pointagesData.forEach((p) => {
-      if (p.statut === "present") {
-        joursPresent++;
-        const heures = calculerHeuresTravaillees(p);
-        totalHeures += heures;
-      }
-      if (p.statut === "absent") {
-        joursAbsent++;
-        if (p.statut_justification_absence === "justifiee") {
-          absencesJustifiees++;
-        }
-      }
-      if (p.retard_minutes > 0) {
-        totalRetard += p.retard_minutes;
-        if (p.retard_minutes > 15) {
-          retardsSignificatifs++;
-        }
-      }
-    });
-
-    const heuresTheoriques = (joursPresent + absencesJustifiees) * 8;
-    const heuresAbsencesNonJustifiees = (joursAbsent - absencesJustifiees) * 8;
-    const heuresPayables = heuresTheoriques;
-
-    const newStats: StatsData = {
-      totalHeures: formatDuree(totalHeures),
-      joursPresent,
-      joursAbsent,
-      absencesJustifiees,
-      totalRetard: formatDuree(totalRetard / 60),
-      retardsSignificatifs,
-      heuresPayables: formatDuree(heuresPayables),
-      heuresAbsencesNonJustifiees: formatDuree(heuresAbsencesNonJustifiees),
-    };
-    setStats(newStats);
-  };
-
-  const calculerHeuresTravaillees = (pointage: Pointage): number => {
-    if (!pointage.pointage_arrive || !pointage.pointage_depart) return 0;
-
-    const arrive = new Date(`2000-01-01T${pointage.pointage_arrive}`);
-    const depart = new Date(`2000-01-01T${pointage.pointage_depart}`);
-    let heures = (depart.getTime() - arrive.getTime()) / (1000 * 60 * 60);
-
-    if (pointage.pointage_pause && pointage.pointage_reprise) {
-      const pause = new Date(`2000-01-01T${pointage.pointage_pause}`);
-      const reprise = new Date(`2000-01-01T${pointage.pointage_reprise}`);
-      const dureePause =
-        (reprise.getTime() - pause.getTime()) / (1000 * 60 * 60);
-      heures -= dureePause;
-    } else {
-      heures -= 1;
+  useEffect(() => {
+    if (moisSelectionne && employe) {
+      loadPointagesMois();
     }
-
-    return Math.max(0, heures);
-  };
-
-  const formatDuree = (heures: number): string => {
-    const h = Math.floor(heures);
-    const m = Math.round((heures - h) * 60);
-    return `${h}h${String(m).padStart(2, "0")}`;
-  };
+  }, [moisSelectionne, employe, loadPointagesMois]);
 
   const formatDate = (dateStr: string): string => {
     const date = new Date(dateStr);

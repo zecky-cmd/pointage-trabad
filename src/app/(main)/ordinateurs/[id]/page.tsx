@@ -130,7 +130,7 @@ export default function EditOrdinateurPage({
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="space-y-1.5">
-                <Label htmlFor="type" className="text-xs">
+                <Label htmlFor="type" className="text-xs text-white">
                   Type *
                 </Label>
                 <Select
@@ -139,7 +139,7 @@ export default function EditOrdinateurPage({
                   defaultValue={ordinateur.type}
                   onValueChange={(val) => setSelectedType(val)}
                 >
-                  <SelectTrigger className="bg-[#1a1a27] border-white/10 h-9 text-sm">
+                  <SelectTrigger className="bg-[#1a1a27] border-white/10 h-9 text-slate-400">
                     <SelectValue placeholder="Type" />
                   </SelectTrigger>
                   <SelectContent>
@@ -153,7 +153,7 @@ export default function EditOrdinateurPage({
                 </Select>
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="code_inventaire" className="text-xs">
+                <Label htmlFor="code_inventaire" className="text-xs text-white">
                   Code Inventaire *
                 </Label>
                 <Input
@@ -161,11 +161,11 @@ export default function EditOrdinateurPage({
                   name="code_inventaire"
                   defaultValue={ordinateur.code_inventaire}
                   required
-                  className="bg-[#1a1a27] border-white/10 h-9 text-sm focus-visible:ring-blue-500/50"
+                  className="bg-[#1a1a27] border-white/10 h-9 text-sm focus-visible:ring-blue-500/50 text-white"
                 />
-              </div>
+              </div>  
               <div className="space-y-1.5">
-                <Label htmlFor="marque" className="text-xs">
+                <Label htmlFor="marque" className="text-xs text-white">
                   Marque *
                 </Label>
                 <Input
@@ -173,11 +173,11 @@ export default function EditOrdinateurPage({
                   name="marque"
                   defaultValue={ordinateur.marque}
                   required
-                  className="bg-[#1a1a27] border-white/10 h-9 text-sm focus-visible:ring-blue-500/50"
+                  className="bg-[#1a1a27] border-white/10 h-9 text-sm focus-visible:ring-blue-500/50 text-white"
                 />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="modele" className="text-xs">
+                <Label htmlFor="modele" className="text-xs text-white">
                   {selectedType === "Téléphone"
                     ? "Nom du téléphone *"
                     : "Modèle *"}
@@ -187,11 +187,11 @@ export default function EditOrdinateurPage({
                   name="modele"
                   defaultValue={ordinateur.modele}
                   required
-                  className="bg-[#1a1a27] border-white/10 h-9 text-sm focus-visible:ring-blue-500/50"
+                  className="bg-[#1a1a27] border-white/10 h-9 text-sm focus-visible:ring-blue-500/50 text-white"
                 />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="numero_serie" className="text-xs">
+                <Label htmlFor="numero_serie" className="text-xs text-white">
                   {selectedType === "Téléphone"
                     ? "IMEI / N° Série *"
                     : "N° Série *"}
@@ -201,12 +201,15 @@ export default function EditOrdinateurPage({
                   name="numero_serie"
                   defaultValue={ordinateur.numero_serie}
                   required
-                  className="bg-[#1a1a27] border-white/10 h-9 text-sm focus-visible:ring-blue-500/50"
+                  className="bg-[#1a1a27] border-white/10 h-9 text-sm focus-visible:ring-blue-500/50 text-white"
                 />
               </div>
 
               <div className="space-y-1.5">
-                <Label htmlFor="date_acquisition" className="text-xs">
+                <Label
+                  htmlFor="date_acquisition"
+                  className="text-xs text-white"
+                >
                   Date d&apos;acquisition
                 </Label>
                 <Input
@@ -220,7 +223,7 @@ export default function EditOrdinateurPage({
                           .split("T")[0]
                       : ""
                   }
-                  className="bg-[#1a1a27] border-white/10 h-9 text-sm filter-white-icon"
+                  className="bg-[#1a1a27] border-white/10 h-9 text-sm filter-white-icon text-white"
                 />
               </div>
             </div>
@@ -235,7 +238,7 @@ export default function EditOrdinateurPage({
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               {selectedType !== "Téléphone" && (
                 <div className="space-y-1.5">
-                  <Label htmlFor="processeur" className="text-xs">
+                  <Label htmlFor="processeur" className="text-xs text-white">
                     Processeur
                   </Label>
                   <Input
@@ -243,12 +246,12 @@ export default function EditOrdinateurPage({
                     name="processeur"
                     defaultValue={ordinateur.processeur}
                     placeholder="ex: i7-1185G7"
-                    className="bg-[#1a1a27] border-white/10 h-9 text-sm focus-visible:ring-purple-500/50"
+                    className="bg-[#1a1a27] border-white/10 h-9 text-sm focus-visible:ring-purple-500/50 text-white"
                   />
                 </div>
               )}
               <div className="space-y-1.5">
-                <Label htmlFor="ram" className="text-xs">
+                <Label htmlFor="ram" className="text-xs text-white">
                   RAM
                 </Label>
                 <Input
@@ -256,11 +259,11 @@ export default function EditOrdinateurPage({
                   name="ram"
                   defaultValue={ordinateur.ram}
                   placeholder="ex: 16 Go"
-                  className="bg-[#1a1a27] border-white/10 h-9 text-sm focus-visible:ring-purple-500/50"
+                  className="bg-[#1a1a27] border-white/10 h-9 text-sm focus-visible:ring-purple-500/50 text-white"
                 />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="disque_dur" className="text-xs">
+                <Label htmlFor="disque_dur" className="text-xs text-white">
                   {selectedType === "Téléphone" ? "Stockage" : "Disque Dur"}
                 </Label>
                 <Input
@@ -272,18 +275,18 @@ export default function EditOrdinateurPage({
                       ? "ex: 128 Go"
                       : "ex: 512 Go SSD"
                   }
-                  className="bg-[#1a1a27] border-white/10 h-9 text-sm focus-visible:ring-purple-500/50"
+                  className="bg-[#1a1a27] border-white/10 h-9 text-sm focus-visible:ring-purple-500/50 text-white"
                 />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="os" className="text-xs">
+                <Label htmlFor="os" className="text-xs text-white">
                   Système (OS)
                 </Label>
                 <Input
                   id="os"
                   name="os"
                   defaultValue={ordinateur.os}
-                  className="bg-[#1a1a27] border-white/10 h-9 text-sm focus-visible:ring-purple-500/50"
+                  className="bg-[#1a1a27] border-white/10 h-9 text-sm focus-visible:ring-purple-500/50 text-white"
                 />
               </div>
             </div>
@@ -297,11 +300,11 @@ export default function EditOrdinateurPage({
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="space-y-1.5">
-                <Label htmlFor="etat" className="text-xs">
+                <Label htmlFor="etat" className="text-xs text-white">
                   État *
                 </Label>
                 <Select name="etat" required defaultValue={ordinateur.etat}>
-                  <SelectTrigger className="bg-[#1a1a27] border-white/10 h-9 text-sm">
+                  <SelectTrigger className="bg-[#1a1a27] border-white/10 h-9 text-sm text-white">
                     <SelectValue placeholder="État" />
                   </SelectTrigger>
                   <SelectContent>
@@ -314,14 +317,14 @@ export default function EditOrdinateurPage({
               </div>
 
               <div className="space-y-1.5">
-                <Label htmlFor="affecte_a" className="text-xs">
+                <Label htmlFor="affecte_a" className="text-xs text-white">
                   Affecté à
                 </Label>
                 <Select
                   name="affecte_a"
                   defaultValue={ordinateur.affecte_a?.toString() || "none"}
                 >
-                  <SelectTrigger className="bg-[#1a1a27] border-white/10 h-9 text-sm">
+                  <SelectTrigger className="bg-[#1a1a27] border-white/10 h-9 text-sm text-white">
                     <SelectValue placeholder="Sélectionner un employé" />
                   </SelectTrigger>
                   <SelectContent>
@@ -339,7 +342,7 @@ export default function EditOrdinateurPage({
               </div>
 
               <div className="space-y-1.5">
-                <Label htmlFor="image_url" className="text-xs">
+                <Label htmlFor="image_url" className="text-xs text-white">
                   Image URL
                 </Label>
                 <Input
@@ -347,12 +350,12 @@ export default function EditOrdinateurPage({
                   name="image_url"
                   defaultValue={ordinateur.image_url}
                   placeholder="https://..."
-                  className="bg-[#1a1a27] border-white/10 h-9 text-sm"
+                  className="bg-[#1a1a27] border-white/10 h-9 text-sm text-white"
                 />
               </div>
 
               <div className="space-y-1.5">
-                <Label htmlFor="password" className="text-xs">
+                <Label htmlFor="password" className="text-xs text-white">
                   Mdp Admin / PIN
                 </Label>
                 <Input
@@ -360,21 +363,21 @@ export default function EditOrdinateurPage({
                   name="password"
                   type="text"
                   defaultValue={ordinateur.password}
-                  className="bg-[#1a1a27] border-white/10 h-9 text-sm"
+                  className="bg-[#1a1a27] border-white/10 h-9 text-sm text-white"
                 />
               </div>
             </div>
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="commentaire" className="text-xs">
+            <Label htmlFor="commentaire" className="text-xs text-white">
               Commentaire
             </Label>
             <Textarea
               id="commentaire"
               name="commentaire"
               defaultValue={ordinateur.commentaire}
-              className="bg-[#1a1a27] border-white/10 min-h-[80px] text-sm focus-visible:ring-blue-500/50"
+              className="bg-[#1a1a27] border-white/10 min-h-[80px] text-sm focus-visible:ring-blue-500/50 text-white"
             />
           </div>
 

@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { useRouter, useSearchParams } from "next/navigation";
 import PointageRowEdit from "@/components/PointageRowEdit";
-import Navigation from "@/components/navigation/Nav";
+
 import type { Employee, Pointage, PointageStats } from "@/types/export";
 import {
   Card,
@@ -15,15 +15,12 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
+
 import {
-  Calendar,
-  Clock,
   FileText,
   Download,
-  User,
   Briefcase,
+  Clock,
   AlertCircle,
   CheckCircle2,
   XCircle,
@@ -307,7 +304,7 @@ export default function DetailEmployePage({
               <div className="flex items-center gap-2 w-full sm:w-auto">
                 <Button
                   onClick={exportPDF}
-                  variant="outline" 
+                  variant="outline"
                   className="flex-1 text-primary sm:flex-none gap-2"
                 >
                   <FileText className="h-4 w-4 text-red-600" />
@@ -341,9 +338,7 @@ export default function DetailEmployePage({
               <div className="text-2xl font-bold text-blue-600">
                 {stats.totalHeures}
               </div>
-              <p className="text-xs text-muted-foreground">
-                Heures effectives
-              </p>
+              <p className="text-xs text-muted-foreground">Heures effectives</p>
             </CardContent>
           </Card>
 
@@ -373,9 +368,7 @@ export default function DetailEmployePage({
               <div className="text-2xl font-bold text-red-600">
                 {stats.heuresAbsencesNonJustifiees}
               </div>
-              <p className="text-xs text-muted-foreground">
-                Heures non payées
-              </p>
+              <p className="text-xs text-muted-foreground">Heures non payées</p>
             </CardContent>
           </Card>
 
@@ -390,9 +383,7 @@ export default function DetailEmployePage({
               <div className="text-2xl font-bold text-green-600">
                 {stats.heuresPayables}
               </div>
-              <p className="text-xs text-muted-foreground">
-                Pour rémunération
-              </p>
+              <p className="text-xs text-muted-foreground">Pour rémunération</p>
             </CardContent>
           </Card>
 
@@ -407,9 +398,7 @@ export default function DetailEmployePage({
               <div className="text-2xl font-bold text-green-600">
                 {stats.retardsJustifiesHeures}
               </div>
-              <p className="text-xs text-muted-foreground">
-                Heures récupérées
-              </p>
+              <p className="text-xs text-muted-foreground">Heures récupérées</p>
             </CardContent>
           </Card>
 
